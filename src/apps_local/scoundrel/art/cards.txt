@@ -1,0 +1,18 @@
+# Scoundrel card art. Format: alias = svg file stem (in this folder).
+# Monsters, weapons and potions: game-icons.net, CC BY 3.0 (see ATTRIBUTION.md).
+goblin      = goblin
+wolf        = wolf
+skeleton    = skeleton
+orc         = orc
+beast       = beast
+jack        = jack
+queen       = queen
+king        = king
+ace         = ace
+dagger      = dagger
+shortsword  = shortsword
+longsword   = longsword
+greatsword  = greatsword
+potionsmall = potionsmall
+potion      = potion
+potionlarge = potionlarge

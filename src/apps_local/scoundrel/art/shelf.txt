@@ -1,0 +1,2 @@
+# The shelf row icon: Lucide (ISC).
+scoundrel = lucide-swords

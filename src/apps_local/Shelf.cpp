@@ -33,6 +33,8 @@
 #include "notes/NotesActivity.h"
 #include "picross/PicrossActivity.h"
 #include "player/PlayerActivity.h"
+#include "scoundrel/ScoundrelActivity.h"
+#include "scoundrel/ScoundrelShelfIcon.h"
 #include "seasalt/SeaSaltActivity.h"
 #include "solitaire/SolitaireActivity.h"
 #include "study/StudyActivity.h"
@@ -58,6 +60,7 @@ constexpr shelf::Item kGames[] = {
     {"BATTLESHIP", &icon_battleship_32, &BattleshipActivity::create},
     {"CONNECTIONS", &icon_connections_32, &ConnectionsActivity::create},
     {"SOLITAIRE", &icon_solitaire_32, &SolitaireActivity::create},
+    {"SCOUNDREL", &icon_scoundrel_32, &ScoundrelActivity::create},
     {"HEARTS", &icon_hearts_32, &HeartsActivity::create},
     {"D&DIAGRAMS", &icon_dungeon_32, &DungeonActivity::create},
     {"INSIDER", &icon_insider_32, &InsiderActivity::create},

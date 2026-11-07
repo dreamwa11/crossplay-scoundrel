@@ -29,6 +29,12 @@ device.
 are drawn from it. Full text at `src/apps_local/solitaire/art/OFL.txt`, with the
 derivation documented in `src/apps_local/solitaire/art/README.md`.
 
+**game-icons.net**, CC BY 3.0, icons by Lorc, Delapouite and Skoll, from
+[game-icons.net](https://game-icons.net). Scoundrel's card art is rasterised from
+them into `src/apps_local/scoundrel/ScoundrelArt.h` at authoring time. The SVGs,
+the list of which icon is whose, and the changes made (recoloured, background
+removed) are in `src/apps_local/scoundrel/art/`.
+
 **"celtic" chess pieces**, MIT, Copyright (c) Maurizio Monge, from
 [maurimo/chess-art](https://github.com/maurimo/chess-art). Chess's board art is
 rasterised from them into `src/apps_local/chess/ChessPieces.h` at authoring

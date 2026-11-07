@@ -26,7 +26,7 @@ devices with an 800x480 panel, capacitive touch and two physical buttons
 (three on the Sticky; the design uses the two shared buttons), and
 [CrossPoint](https://crosspointreader.com/) already makes them good at reading.
 CrossPlay is firmware that keeps all of that and adds the other things a screen
-that holds still is good at: **25 games and 8 apps**,
+that holds still is good at: **26 games and 8 apps**,
 spaced-repetition flashcards, comics, a read-later queue, and two devices that
 play together with nothing to set up.
 
@@ -54,6 +54,7 @@ the import lands a real pack instead of failing on an unreachable host.
 | **Battleship**   | Lay out a fleet, then hunt someone else's.                                   |
 | **Connections**  | The daily word grid, with an archive of past boards.                         |
 | **Solitaire**    | Klondike, turned sideways because that is the shape of a tableau.            |
+| **Scoundrel**    | The solo dungeon crawl from a deck of cards. Fight, equip, drink or flee.    |
 | **Hearts**       | Duck the tricks. Every heart costs one and the queen of spades costs 13.     |
 | **D&Diagrams**   | A nonogram whose clues are a dungeon. 64 of them.                            |
 | **Insider**      | A party game for a table and one device.                                     |

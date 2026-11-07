@@ -1,0 +1,6 @@
+# Type marks and the shelf icon: Lucide, ISC licence (vendored in the SDK).
+skull    = lucide-skull
+sword    = lucide-sword
+flask    = lucide-flask-conical
+heart    = lucide-heart
+hand     = lucide-hand
