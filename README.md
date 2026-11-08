@@ -1,3 +1,10 @@
+> **crossplay-scoundrel-papermono** is a copy of [CrossPlay](https://github.com/ma-r-s/crossplay)
+> for the M5Stack PaperMono / PaperMono-Lite with one game added: **Scoundrel**
+> (`src/apps_local/scoundrel/`). Firmware is built by GitHub Actions
+> (`.github/workflows/papermono.yml`); tagged versions are published as releases,
+> and the device's *Check for updates* reads this repository's releases, not
+> upstream's. Everything below is CrossPlay's own README.
+
 <h1 align="center">
   <img src="site/assets/logo.svg#gh-light-mode-only" width="72" alt="CrossPlay"><img src="site/assets/logo-dark.svg#gh-dark-mode-only" width="72" alt="CrossPlay"><br>
   CrossPlay

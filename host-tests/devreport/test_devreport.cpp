@@ -388,13 +388,12 @@ void testIsOwnHost() {
 // the first source is one the device reports to, so a check counts it on the
 // board; the second is not, and is the fallback that keeps OTA alive.
 void testReleaseSources() {
-  check(release_sources::kCount == 2, "two sources: the site, then github");
-  check(devreport::reportsTo(true, release_sources::kUrls[0]), "the first source is ours: the check is counted");
-  check(!devreport::reportsTo(true, release_sources::kUrls[1]),
-        "the second source is not: the fallback reports nothing");
-  check(std::string(release_sources::kUrls[0]) == "https://crossplay.ma-r-s.com/api/latest", "the site's /api/latest");
-  check(std::string(release_sources::kUrls[1]) == "https://api.github.com/repos/ma-r-s/crossplay/releases/latest",
-        "github's releases/latest, exactly what the check asked before");
+  // crossplay-scoundrel-papermono asks its own GitHub releases and nothing else.
+  check(release_sources::kCount == 1, "one source: this repository's releases");
+  check(!devreport::reportsTo(true, release_sources::kUrls[0]), "github reports nothing");
+  check(std::string(release_sources::kUrls[0]) ==
+            "https://api.github.com/repos/dreamwa11/crossplay-scoundrel-papermono/releases/latest",
+        "this repository's releases/latest");
 }
 
 void testReportsTo() {

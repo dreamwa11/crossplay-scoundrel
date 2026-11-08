@@ -16,11 +16,14 @@
 // A pure header, so host-tests/devreport can pin the two facts that matter:
 // the first source is one the device reports to, the second is not.
 
+// CROSSPLAY-SCOUNDREL-PAPERMONO: updates come from this repository's own
+// releases only. Asking upstream would offer official CrossPlay, which has no
+// Scoundrel, and installing it would quietly remove the game.
+
 namespace release_sources {
 
 constexpr const char* const kUrls[] = {
-    "https://crossplay.ma-r-s.com/api/latest",
-    "https://api.github.com/repos/ma-r-s/crossplay/releases/latest",
+    "https://api.github.com/repos/dreamwa11/crossplay-scoundrel-papermono/releases/latest",
 };
 constexpr int kCount = static_cast<int>(sizeof(kUrls) / sizeof(kUrls[0]));
 
