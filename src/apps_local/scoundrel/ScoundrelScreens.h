@@ -4,10 +4,11 @@
 // Toybox tokens, nothing else, so host-tests/ui can build every screen against a
 // fake target.
 //
-// The cards are plain white faces with one black glyph in the middle, the rank
-// in the corner and the card's kind as a small mark opposite it. No painted art:
-// the panel has four greys and refreshes in half a second, and a silhouette is
-// the one picture that survives both.
+// The table follows the phone version's arrangement: a top bar (cards and
+// monsters left, the room, a menu button), the room as one row of four cards
+// with their choices underneath, then the desk -- deck, hero, weapon -- and
+// NEW DUNGEON / FLEE ROOM at the bottom. Every card carries its kind's mark
+// top-left and its value top-right, as on the phone.
 
 #include "../ui/ToyboxScreen.h"
 #include "ScoundrelCore.h"
@@ -25,9 +26,14 @@ enum : fui::ActionId {
   ActionSeeResult = 5,
   ActionAgain = 6,
   ActionDone = 7,
+  // The board's menu button and its NEW DUNGEON button, and the confirm sheet.
+  ActionMenu = 8,
+  ActionNewGame = 9,
+  ActionAbandon = 10,
+  ActionKeepPlaying = 11,
 };
 
-enum class Screen : uint8_t { Menu = 0, HowTo, Board, Result };
+enum class Screen : uint8_t { Menu = 0, HowTo, Board, Result, Confirm };
 
 enum class MenuRow : int { Continue = 0, NewGame, HowTo, Health, Count };
 
@@ -72,6 +78,7 @@ void buildMenu(toybox::Screen& screen, const MenuModel& model);
 void buildHowTo(toybox::Screen& screen, const HowToModel& model);
 void buildBoard(toybox::Screen& screen, const BoardModel& model);
 void buildResult(toybox::Screen& screen, const ResultModel& model);
+void buildConfirm(toybox::Screen& screen);
 
 int howToPages();
 

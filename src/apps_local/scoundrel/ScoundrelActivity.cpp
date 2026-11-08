@@ -26,11 +26,10 @@ constexpr char kSavePath[] = "/.crosspoint/scoundrel.sav";
 // fit with room to spare.
 constexpr int kSaveBytes = 640;
 
-// The board's faces: buttons and the message line in the button cut, chips in
-// the UI cut, ranks and health in the display cut.
-toybox::Faces boardFaces() {
-  return toybox::Faces{toybox::kButtonFontId, toybox::kUiFontId, toybox::kDisplayFontId};
-}
+// The board's faces: card names and desk labels in the tile cut, chips,
+// buttons and the message line in the UI cut, values and the room in the
+// display cut.
+toybox::Faces boardFaces() { return toybox::Faces{toybox::kTileFontId, toybox::kUiFontId, toybox::kDisplayFontId}; }
 }  // namespace
 
 std::unique_ptr<Activity> ScoundrelActivity::create(GfxRenderer& renderer, MappedInputManager& mappedInput) {
@@ -163,6 +162,9 @@ void ScoundrelActivity::loop() {
         save();
         shelf::leave(renderer, mappedInput);
         return;
+      case ui::Screen::Confirm:
+        goTo(ui::Screen::Board);
+        return;
       case ui::Screen::Result:
       case ui::Screen::HowTo:
       case ui::Screen::Board:
@@ -240,6 +242,28 @@ void ScoundrelActivity::loop() {
       goTo(ui::Screen::Menu);
       return;
 
+    case ui::ActionMenu:
+      save();
+      goTo(ui::Screen::Menu);
+      return;
+
+    case ui::ActionNewGame:
+      // Like the phone: a dungeon you have started asks before it is thrown away.
+      if (hasGame && game.started && !game.over) {
+        goTo(ui::Screen::Confirm);
+      } else {
+        newGame();
+      }
+      return;
+
+    case ui::ActionAbandon:
+      newGame();
+      return;
+
+    case ui::ActionKeepPlaying:
+      goTo(ui::Screen::Board);
+      return;
+
     default:
       break;
   }
@@ -293,6 +317,9 @@ void ScoundrelActivity::render(RenderLock&&) {
       ui::buildBoard(surface, model);
       break;
     }
+    case ui::Screen::Confirm:
+      ui::buildConfirm(surface);
+      break;
     case ui::Screen::Result: {
       ui::ResultModel model;
       model.game = game;

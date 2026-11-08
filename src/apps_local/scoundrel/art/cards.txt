@@ -1,5 +1,5 @@
 # Scoundrel card art. Format: alias = svg file stem (in this folder).
-# Monsters, weapons and potions: game-icons.net, CC BY 3.0 (see ATTRIBUTION.md).
+# Monsters, weapons, potions and the hero: Microsoft Fluent UI Emoji, MIT (see ATTRIBUTION.md).
 goblin      = goblin
 wolf        = wolf
 skeleton    = skeleton
@@ -16,3 +16,4 @@ greatsword  = greatsword
 potionsmall = potionsmall
 potion      = potion
 potionlarge = potionlarge
+hero        = hero

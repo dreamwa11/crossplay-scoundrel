@@ -17,44 +17,68 @@ namespace s = scoundrel;
 
 const fui::Paint kBlack = fui::Paint::solid(fui::Color::Black);
 const fui::Paint kWhite = fui::Paint::solid(fui::Color::White);
+constexpr int16_t kRadius = 8;
 
 // ---- geometry -------------------------------------------------------------
 //
-// Two rows of two. Four cards in a row would be 104px wide each on a 480px
-// panel: a 48px glyph and no room under it for the two choices a monster can
-// offer. Two by two makes every card a 218px target with a 96px glyph.
-constexpr int16_t kSide = toybox::kMargin;
-constexpr int16_t kGap = toybox::kGutter;
-constexpr int16_t kCardH = 226;
-constexpr int16_t kRadius = 10;
+// The phone version's arrangement, top to bottom, on a 480x800 panel:
+//
+//   top bar      cards left / monsters left, ROOM n, the menu button
+//   the scene    a doorway in a brick wall
+//   the room     four cards in a row, their choices underneath
+//   message      what just happened
+//   banner       SCOUNDREL
+//   the desk     DECK, HEALTH, WEAPON
+//   buttons      NEW DUNGEON, FLEE ROOM
+constexpr int16_t kTopBarH = 58;
+constexpr int16_t kSceneBottom = 238;
+constexpr int16_t kRoomTop = 246;
+constexpr int16_t kCardW = 110;
+constexpr int16_t kCardH = 150;
+constexpr int16_t kRoomGap = 8;
+constexpr int16_t kChipTop = kRoomTop + kCardH + 6;
+constexpr int16_t kChipH = 40;
+constexpr int16_t kNoteTop = kChipTop + kChipH + 4;
+constexpr int16_t kNoteH = 30;
+constexpr int16_t kBannerTop = kNoteTop + kNoteH + 4;
+constexpr int16_t kBannerH = 42;
+constexpr int16_t kDeskTop = kBannerTop + kBannerH + 10;
+constexpr int16_t kDeskW = 104;
+constexpr int16_t kDeskH = 160;
+constexpr int16_t kButtonsTop = 740;
 
-int16_t cardW(const fui::DeviceContext& device) { return static_cast<int16_t>((device.width - kSide * 2 - kGap) / 2); }
-int16_t tableTop() { return static_cast<int16_t>(toybox::kChromeHeight + kGap); }
+int16_t roomLeft(const fui::DeviceContext& device) {
+  return static_cast<int16_t>((device.width - (kCardW * 4 + kRoomGap * 3)) / 2);
+}
 
-const freeink::Icon& artFor(const uint8_t card, const bool big) {
+const freeink::Icon& artFor(const uint8_t card, const int size) {
   const int v = s::valueOf(card);
+  const bool b = size >= 96;
+  const bool m = size >= 64 && !b;
+#define ART(name) (b ? icon_##name##_96 : m ? icon_##name##_64 : icon_##name##_48)
   switch (s::kindOf(card)) {
     case s::Kind::Monster:
-      if (v == 11) return big ? icon_jack_96 : icon_jack_48;
-      if (v == 12) return big ? icon_queen_96 : icon_queen_48;
-      if (v == 13) return big ? icon_king_96 : icon_king_48;
-      if (v == 14) return big ? icon_ace_96 : icon_ace_48;
-      if (v == 2) return big ? icon_goblin_96 : icon_goblin_48;
-      if (v <= 4) return big ? icon_wolf_96 : icon_wolf_48;
-      if (v <= 6) return big ? icon_skeleton_96 : icon_skeleton_48;
-      if (v <= 8) return big ? icon_orc_96 : icon_orc_48;
-      return big ? icon_beast_96 : icon_beast_48;
+      if (v == 11) return ART(jack);
+      if (v == 12) return ART(queen);
+      if (v == 13) return ART(king);
+      if (v == 14) return ART(ace);
+      if (v == 2) return ART(goblin);
+      if (v <= 4) return ART(wolf);
+      if (v <= 6) return ART(skeleton);
+      if (v <= 8) return ART(orc);
+      return ART(beast);
     case s::Kind::Weapon:
-      if (v <= 3) return big ? icon_dagger_96 : icon_dagger_48;
-      if (v <= 5) return big ? icon_shortsword_96 : icon_shortsword_48;
-      if (v <= 8) return big ? icon_longsword_96 : icon_longsword_48;
-      return big ? icon_greatsword_96 : icon_greatsword_48;
+      if (v <= 3) return ART(dagger);
+      if (v <= 5) return ART(shortsword);
+      if (v <= 8) return ART(longsword);
+      return ART(greatsword);
     case s::Kind::Potion:
     default:
-      if (v <= 3) return big ? icon_potionsmall_96 : icon_potionsmall_48;
-      if (v <= 8) return big ? icon_potion_96 : icon_potion_48;
-      return big ? icon_potionlarge_96 : icon_potionlarge_48;
+      if (v <= 3) return ART(potionsmall);
+      if (v <= 8) return ART(potion);
+      return ART(potionlarge);
   }
+#undef ART
 }
 
 const freeink::Icon& markFor(const uint8_t card) {
@@ -64,7 +88,7 @@ const freeink::Icon& markFor(const uint8_t card) {
     case s::Kind::Weapon:
       return icon_sword_24;
     default:
-      return icon_flask_24;
+      return icon_heart_24;
   }
 }
 
@@ -72,98 +96,131 @@ void icon(toybox::Screen& screen, const fui::Rect& box, const freeink::Icon& art
   screen.target().bitmap(box, fui::bitmapFromIcon(art), fui::BitmapMode::Center, paper ? kWhite : kBlack);
 }
 
-fui::TextStyle style(const fui::FontId font, const fui::TextAlign align = fui::TextAlign::Center) {
+fui::TextStyle style(const fui::FontId font, const fui::TextAlign align = fui::TextAlign::Center,
+                     const bool paper = false) {
   fui::TextStyle t;
   t.font = font;
   t.align = align;
+  if (paper) t.color = fui::Color::White;
   return t;
 }
 
-// ---- the card face --------------------------------------------------------
+fui::Rect centred(const int16_t cx, const int16_t y, const int16_t w, const int16_t h) {
+  return fui::makeRect(static_cast<int16_t>(cx - w / 2), y, w, h);
+}
 
-// rank top-left, kind mark top-right, the glyph, the name. `body` is the area
-// above the chips; a card without chips (the menu's ornament) uses all of it.
-void drawFace(toybox::Screen& screen, const fui::Rect& rect, const uint8_t card) {
+// ---- the card face --------------------------------------------------------
+//
+// Kind mark top-left, value top-right, the picture, the name along the bottom.
+// `art` is 64 for the room and the weapon slot, 96 for the menus. `nameFont` is
+// whichever slot holds the smallest cut on the calling screen.
+void drawFace(toybox::Screen& screen, const fui::Rect& rect, const uint8_t card, const int art,
+              const fui::FontId nameFont, const int16_t nameLine) {
   auto& target = screen.target();
   target.fill(rect, kWhite, kRadius);
   target.stroke(rect, kBlack, 2, kRadius);
 
-  target.text(toybox::inkCentred(fui::makeRect(static_cast<int16_t>(rect.x + 12), static_cast<int16_t>(rect.y + 6), 70,
-                                               toybox::kDisplayCut.lineHeight),
-                                 toybox::kDisplayCut),
-              s::rankLabel(card), style(toybox::kDisplayFont, fui::TextAlign::Left));
-  icon(screen, fui::makeRect(static_cast<int16_t>(rect.right() - 12 - 24), static_cast<int16_t>(rect.y + 14), 24, 24),
+  icon(screen, fui::makeRect(static_cast<int16_t>(rect.x + 7), static_cast<int16_t>(rect.y + 8), 24, 24),
        markFor(card));
+  target.text(toybox::inkCentred(fui::makeRect(static_cast<int16_t>(rect.right() - 8 - 64),
+                                               static_cast<int16_t>(rect.y + 2), 64, toybox::kDisplayCut.lineHeight),
+                                 toybox::kDisplayCut),
+              s::rankLabel(card), style(toybox::kDisplayFont, fui::TextAlign::Right));
 
-  icon(screen,
-       fui::makeRect(static_cast<int16_t>(rect.x + (rect.width - 96) / 2), static_cast<int16_t>(rect.y + 44), 96, 96),
-       artFor(card, true));
-
-  target.text(fui::makeRect(rect.x, static_cast<int16_t>(rect.y + 146), rect.width, toybox::kButtonCut.lineHeight),
-              s::cardName(card), style(toybox::kSmallFont));
+  const int16_t nameTop = static_cast<int16_t>(rect.bottom() - nameLine - 4);
+  const int16_t artTop = static_cast<int16_t>(rect.y + 36 + (nameTop - rect.y - 36 - art) / 2);
+  icon(screen, centred(static_cast<int16_t>(rect.x + rect.width / 2), artTop, static_cast<int16_t>(art),
+                       static_cast<int16_t>(art)),
+       artFor(card, art));
+  target.text(fui::makeRect(static_cast<int16_t>(rect.x + 2), nameTop, static_cast<int16_t>(rect.width - 4), nameLine),
+              s::cardName(card), style(nameFont));
 }
 
-// One choice under a card. Outlined, or solid black when it is the better of
-// two; a choice that would kill you carries a skull instead of its tool.
+// One choice under a room card: an outlined chip, or solid black when it is the
+// better of two; a choice that would kill you carries a skull instead of its
+// tool. The button is registered bare and its contents drawn here, packed
+// tighter than the button's own layout allows: a chip is 53px wide and has to
+// hold a 24px mark and a two-digit number.
 void chip(toybox::Screen& screen, const fui::Rect& box, const char* label, const freeink::Icon* art, const bool loud,
           const int16_t value) {
   fui::ButtonProps b;
-  b.label = label;
+  b.label = "";
   b.action = ActionCard;
   b.value = value;
   b.styles = toybox::rowStyles();
   b.state = loud ? fui::StateSelected : fui::StateNormal;
-  b.text = style(toybox::kUiFont);
-  if (art) b.icon = fui::bitmapFromIcon(*art);
-  b.gap = 6;
   b.radius = 8;
+  b.minTouchSize = 40;
   screen.button(b, box);
+
+  auto& target = screen.target();
+  const fui::TextStyle t = style(toybox::kUiFont, fui::TextAlign::Left, loud);
+  const int16_t tw = target.measureText(t.font, label, t).width;
+  const int16_t iw = art ? 24 : 0;
+  const int16_t gap = art ? 2 : 0;
+  const int16_t x = static_cast<int16_t>(box.x + (box.width - iw - gap - tw) / 2);
+  if (art) icon(screen, fui::makeRect(x, static_cast<int16_t>(box.y + (box.height - 24) / 2), 24, 24), *art, loud);
+  target.text(toybox::inkCentred(fui::makeRect(static_cast<int16_t>(x + iw + gap), box.y, static_cast<int16_t>(tw + 4),
+                                               box.height),
+                                 toybox::kUiCut),
+              label, t);
 }
 
-void drawSlot(toybox::Screen& screen, const BoardModel& model, const int slot) {
+// The weapon choice when there is no weapon, or it is too dull: shown, not
+// offered, like the phone's greyed-out sword.
+void spentChip(toybox::Screen& screen, const fui::Rect& box) {
+  screen.target().stroke(box, fui::Paint::dither(fui::Color::DarkGray), 2, 8);
+  screen.target().bitmap(centred(static_cast<int16_t>(box.x + box.width / 2 - 8),
+                                 static_cast<int16_t>(box.y + (box.height - 24) / 2), 24, 24),
+                         fui::bitmapFromIcon(icon_sword_24), fui::BitmapMode::Center,
+                         fui::Paint::dither(fui::Color::DarkGray));
+  screen.target().text(fui::makeRect(static_cast<int16_t>(box.x + box.width / 2 + 4), box.y,
+                                     static_cast<int16_t>(box.width / 2 - 6), box.height),
+                       "-", style(toybox::kUiFont, fui::TextAlign::Left));
+}
+
+void drawRoomCard(toybox::Screen& screen, const BoardModel& model, const int slot) {
   const fui::Rect rect = slotRect(screen.device(), slot);
   const uint8_t card = model.game.room[slot];
   if (card == s::kNoCard) {
     cardart::drawCardSlot(screen, rect);
     return;
   }
-  drawFace(screen, rect, card);
+  drawFace(screen, rect, card, 64, toybox::kSmallFont, toybox::kTileCut.lineHeight);
   if (model.game.over) return;
 
-  // The choices, along the bottom of the card.
-  const fui::Rect row = fui::makeRect(static_cast<int16_t>(rect.x + 8), static_cast<int16_t>(rect.bottom() - 8 - 40),
-                                      static_cast<int16_t>(rect.width - 16), 40);
+  const fui::Rect row = fui::makeRect(rect.x, kChipTop, rect.width, kChipH);
   const s::Game& g = model.game;
   char a[12];
   char b[12];
   switch (s::kindOf(card)) {
     case s::Kind::Monster: {
       const s::Preview p = s::preview(g, card);
-      const bool fistKills = p.fist >= g.hp;
-      std::snprintf(a, sizeof(a), "-%d", p.fist);
+      const int16_t half = static_cast<int16_t>((row.width - 4) / 2);
+      const fui::Rect left = fui::makeRect(row.x, row.y, half, row.height);
+      const fui::Rect right = fui::makeRect(static_cast<int16_t>(row.right() - half), row.y, half, row.height);
+      std::snprintf(a, sizeof(a), "%d", p.fist);
       if (p.weapon < 0) {
-        chip(screen, row, a, fistKills ? &icon_skull_24 : &icon_hand_24, false, encodeCard(slot, s::Mode::Fist));
+        chip(screen, left, a, p.fist >= g.hp ? &icon_skull_24 : &icon_hand_24, false, encodeCard(slot, s::Mode::Fist));
+        spentChip(screen, right);
         break;
       }
-      const bool weaponKills = p.weapon >= g.hp;
-      std::snprintf(b, sizeof(b), p.weapon ? "-%d" : "0", p.weapon);
-      const int16_t half = static_cast<int16_t>((row.width - 8) / 2);
+      std::snprintf(b, sizeof(b), "%d", p.weapon);
       // The weapon is the loud one unless bare hands cost no more.
       const bool fistBetter = p.fist <= p.weapon;
-      chip(screen, fui::makeRect(row.x, row.y, half, row.height), a, fistKills ? &icon_skull_24 : &icon_hand_24,
-           fistBetter, encodeCard(slot, s::Mode::Fist));
-      chip(screen, fui::makeRect(static_cast<int16_t>(row.right() - half), row.y, half, row.height), b,
-           weaponKills ? &icon_skull_24 : &icon_sword_24, !fistBetter, encodeCard(slot, s::Mode::Weapon));
+      chip(screen, left, a, p.fist >= g.hp ? &icon_skull_24 : &icon_hand_24, fistBetter,
+           encodeCard(slot, s::Mode::Fist));
+      chip(screen, right, b, p.weapon >= g.hp ? &icon_skull_24 : &icon_sword_24, !fistBetter,
+           encodeCard(slot, s::Mode::Weapon));
       break;
     }
     case s::Kind::Weapon:
-      chip(screen, row, g.weapon == s::kNoCard ? "EQUIP" : "SWAP", &icon_sword_24, false,
-           encodeCard(slot, s::Mode::Auto));
+      chip(screen, row, g.weapon == s::kNoCard ? "EQUIP" : "SWAP", nullptr, false, encodeCard(slot, s::Mode::Auto));
       break;
     case s::Kind::Potion:
     default:
       if (g.potionUsed) {
-        chip(screen, row, "WASTED", &icon_flask_24, false, encodeCard(slot, s::Mode::Auto));
+        chip(screen, row, "WASTED", nullptr, false, encodeCard(slot, s::Mode::Auto));
       } else {
         int heal = g.maxHp - g.hp;
         if (heal > s::valueOf(card)) heal = s::valueOf(card);
@@ -174,79 +231,186 @@ void drawSlot(toybox::Screen& screen, const BoardModel& model, const int slot) {
   }
 }
 
-// ---- the status strip -----------------------------------------------------
+// ---- top bar, scene, banner -------------------------------------------------
 
-void drawHealth(toybox::Screen& screen, const fui::Rect& box, const s::Game& g) {
+void topBar(toybox::Screen& screen, const s::Game& g) {
   auto& target = screen.target();
-  target.stroke(box, kBlack, 2, kRadius);
-  // A gauge along the bottom: what is left of the health, as area.
-  const int hp = g.hp < 0 ? 0 : g.hp;
-  const fui::Rect bar = fui::makeRect(static_cast<int16_t>(box.x + 12), static_cast<int16_t>(box.bottom() - 24),
-                                      static_cast<int16_t>(box.width - 24), 10);
-  target.stroke(bar, kBlack, 1, 3);
-  const int16_t filled = static_cast<int16_t>(bar.width * hp / (g.maxHp > 0 ? g.maxHp : 1));
-  if (filled > 0) target.fill(fui::makeRect(bar.x, bar.y, filled, bar.height), kBlack, 3);
-
-  icon(screen, fui::makeRect(static_cast<int16_t>(box.x + 12), static_cast<int16_t>(box.y + 14), 32, 32),
-       icon_heart_32);
+  const int16_t w = screen.device().width;
   char line[16];
-  std::snprintf(line, sizeof(line), "%d", hp);
-  const fui::TextStyle big = style(toybox::kDisplayFont, fui::TextAlign::Left);
-  const fui::Rect numberBox = toybox::inkCentred(
-      fui::makeRect(static_cast<int16_t>(box.x + 50), static_cast<int16_t>(box.y + 6), 64, toybox::kDisplayCut.lineHeight),
-      toybox::kDisplayCut);
-  target.text(numberBox, line, big);
-  const int16_t numberW = target.measureText(big.font, line, big).width;
-  // The maximum beside it, small, on the same baseline: "17 /20".
-  std::snprintf(line, sizeof(line), "/%d", g.maxHp);
-  target.text(fui::makeRect(static_cast<int16_t>(box.x + 50 + numberW + 4), static_cast<int16_t>(box.y + 30),
-                            static_cast<int16_t>(box.right() - (box.x + 50 + numberW + 4) - 6),
-                            toybox::kButtonCut.lineHeight),
-              line, style(toybox::kSmallFont, fui::TextAlign::Left));
+  int16_t x = 10;
+  const int16_t midY = kTopBarH / 2;
+  auto counter = [&](const freeink::Icon& art, const int n) {
+    icon(screen, fui::makeRect(x, static_cast<int16_t>(midY - 12), 24, 24), art);
+    std::snprintf(line, sizeof(line), "%d", n);
+    const fui::TextStyle t = style(toybox::kUiFont, fui::TextAlign::Left);
+    const int16_t tw = target.measureText(t.font, line, t).width;
+    target.text(toybox::inkCentred(fui::makeRect(static_cast<int16_t>(x + 26), 0, static_cast<int16_t>(tw + 4), kTopBarH),
+                                   toybox::kUiCut),
+                line, t);
+    x = static_cast<int16_t>(x + 26 + tw + 10);
+  };
+  counter(icon_deck_24, g.deckLen + s::roomCount(g));
+  counter(icon_skull_24, s::monstersLeft(g));
+
+  // The room's name in whatever is left between the counters and the menu.
+  std::snprintf(line, sizeof(line), "ROOM %d", g.roomNo);
+  const int16_t right = static_cast<int16_t>(w - 12 - 46 - 6);
+  target.text(toybox::inkCentred(fui::makeRect(x, 0, static_cast<int16_t>(right - x), kTopBarH), toybox::kDisplayCut),
+              line, style(toybox::kDisplayFont));
+
+  fui::ButtonProps menu;
+  menu.icon = fui::bitmapFromIcon(icon_menu_24);
+  menu.action = ActionMenu;
+  menu.styles = toybox::rowStyles();
+  menu.radius = 8;
+  screen.button(menu, fui::makeRect(static_cast<int16_t>(w - 12 - 46), static_cast<int16_t>(midY - 23), 46, 46));
+  target.fill(fui::makeRect(0, kTopBarH, w, 2), kBlack);
 }
 
-void drawWeapon(toybox::Screen& screen, const fui::Rect& box, const s::Game& g) {
+// The doorway in a brick wall, as on the phone. Drawn once per repaint and
+// never changes, so it costs no ghosting.
+void scene(toybox::Screen& screen) {
   auto& target = screen.target();
-  if (g.weapon == s::kNoCard) {
-    cardart::drawCardSlot(screen, box);
-    icon(screen, fui::makeRect(static_cast<int16_t>(box.x + 16), static_cast<int16_t>(box.y + (box.height - 32) / 2),
-                               32, 32),
-         icon_hand_32);
-    target.text(fui::makeRect(static_cast<int16_t>(box.x + 60), static_cast<int16_t>(box.y + 20),
-                              static_cast<int16_t>(box.width - 70), toybox::kUiCut.lineHeight),
-                "BARE HANDS", style(toybox::kUiFont, fui::TextAlign::Left));
-    target.text(fui::makeRect(static_cast<int16_t>(box.x + 60), static_cast<int16_t>(box.y + 58),
-                              static_cast<int16_t>(box.width - 70), toybox::kButtonCut.lineHeight),
-                "NO WEAPON", style(toybox::kSmallFont, fui::TextAlign::Left));
-    return;
+  const int16_t w = screen.device().width;
+  const int16_t top = kTopBarH + 2;
+  target.fill(fui::makeRect(0, top, w, static_cast<int16_t>(kSceneBottom - top)),
+              fui::Paint::dither(fui::Color::LightGray));
+  // Mortar: white courses, the bricks offset every other row.
+  constexpr int16_t kCourse = 22;
+  constexpr int16_t kBrick = 56;
+  int row = 0;
+  for (int16_t y = static_cast<int16_t>(top + kCourse); y < kSceneBottom; y = static_cast<int16_t>(y + kCourse), ++row) {
+    target.fill(fui::makeRect(0, y, w, 2), kWhite);
+    const int16_t offset = (row % 2) ? kBrick / 2 : 0;
+    for (int16_t x = offset; x < w; x = static_cast<int16_t>(x + kBrick)) {
+      target.fill(fui::makeRect(x, static_cast<int16_t>(y - kCourse + 2), 2, static_cast<int16_t>(kCourse - 2)), kWhite);
+    }
   }
-  target.fill(box, kWhite, kRadius);
-  target.stroke(box, kBlack, 2, kRadius);
-  icon(screen, fui::makeRect(static_cast<int16_t>(box.x + 10), static_cast<int16_t>(box.y + (box.height - 48) / 2), 48,
-                             48),
-       artFor(g.weapon, false));
-  const int16_t textX = static_cast<int16_t>(box.x + 68);
-  const int16_t textW = static_cast<int16_t>(box.right() - textX - 8);
-  // The name on top, the value and its limit under it: "LAST KILL 8" is the
-  // number the next fight is measured against.
-  target.text(fui::makeRect(textX, static_cast<int16_t>(box.y + 8), textW, toybox::kButtonCut.lineHeight),
-              s::cardName(g.weapon), style(toybox::kSmallFont, fui::TextAlign::Left));
-  char line[24];
-  std::snprintf(line, sizeof(line), "%d", s::valueOf(g.weapon));
-  const fui::TextStyle big = style(toybox::kDisplayFont, fui::TextAlign::Left);
-  target.text(toybox::inkCentred(fui::makeRect(textX, static_cast<int16_t>(box.y + 34), 50, toybox::kDisplayCut.lineHeight),
-                                 toybox::kDisplayCut),
-              line, big);
-  const int16_t valueW = target.measureText(big.font, line, big).width;
-  if (g.weaponLast < 0) {
-    std::snprintf(line, sizeof(line), "UNUSED");
+  // The doorway: a dark arch with a stone frame, its foot behind the room.
+  const int16_t doorW = 168;
+  const fui::Rect frame = centred(static_cast<int16_t>(w / 2), static_cast<int16_t>(top + 18),
+                                  static_cast<int16_t>(doorW + 28), 300);
+  target.fill(frame, kWhite, static_cast<uint8_t>((doorW + 28) / 2));
+  target.stroke(frame, kBlack, 3, static_cast<uint8_t>((doorW + 28) / 2));
+  const fui::Rect door = centred(static_cast<int16_t>(w / 2), static_cast<int16_t>(top + 32), doorW, 300);
+  target.fill(door, fui::Paint::dither(fui::Color::DarkGray), static_cast<uint8_t>(doorW / 2));
+  target.stroke(door, kBlack, 3, static_cast<uint8_t>(doorW / 2));
+  // The floor the room is dealt onto.
+  target.fill(fui::makeRect(0, kSceneBottom, w, static_cast<int16_t>(kRoomTop + kCardH + 4 - kSceneBottom)), kWhite);
+  target.fill(fui::makeRect(0, kSceneBottom, w, 2), kBlack);
+}
+
+void banner(toybox::Screen& screen) {
+  const int16_t w = screen.device().width;
+  const fui::Rect band = fui::makeRect(0, kBannerTop, w, kBannerH);
+  screen.target().fill(band, kBlack);
+  screen.target().text(toybox::inkCentred(band, toybox::kDisplayCut), "SCOUNDREL",
+                       style(toybox::kDisplayFont, fui::TextAlign::Center, true));
+}
+
+// ---- the desk ---------------------------------------------------------------
+
+fui::Rect deskRect(const fui::DeviceContext& device, const int i) {
+  const int16_t gap = static_cast<int16_t>((device.width - kDeskW * 3) / 4);
+  return fui::makeRect(static_cast<int16_t>(gap + i * (kDeskW + gap)), kDeskTop, kDeskW, kDeskH);
+}
+
+void deskLabel(toybox::Screen& screen, const fui::Rect& slot, const char* label) {
+  screen.target().text(fui::makeRect(static_cast<int16_t>(slot.x - 10), static_cast<int16_t>(slot.bottom() + 22),
+                                     static_cast<int16_t>(slot.width + 20), toybox::kTileCut.lineHeight),
+                       label, style(toybox::kSmallFont));
+}
+
+// A white pill hanging off the bottom of a desk card: the deck's count, the
+// weapon's limit.
+void badge(toybox::Screen& screen, const fui::Rect& slot, const char* text, const int16_t width) {
+  const fui::Rect pill = centred(static_cast<int16_t>(slot.x + slot.width / 2), static_cast<int16_t>(slot.bottom() - 22),
+                                 width, 40);
+  screen.target().fill(pill, kWhite, 12);
+  screen.target().stroke(pill, kBlack, 2, 12);
+  screen.target().text(toybox::inkCentred(pill, toybox::kUiCut), text, style(toybox::kUiFont));
+}
+
+void drawDeck(toybox::Screen& screen, const fui::Rect& slot, const s::Game& g) {
+  auto& target = screen.target();
+  if (g.deckLen == 0) {
+    cardart::drawCardSlot(screen, slot);
   } else {
-    std::snprintf(line, sizeof(line), "LAST KILL %s", s::rankLabel(s::makeCard(s::Kind::Monster, g.weaponLast)));
+    // A little stack behind the top card while there is one.
+    if (g.deckLen > 1) {
+      const fui::Rect under = fui::makeRect(static_cast<int16_t>(slot.x - 4), static_cast<int16_t>(slot.y + 4),
+                                            slot.width, slot.height);
+      target.fill(under, kWhite, kRadius);
+      target.stroke(under, kBlack, 2, kRadius);
+    }
+    target.fill(slot, kWhite, kRadius);
+    target.stroke(slot, kBlack, 2, kRadius);
+    const fui::Rect inner = fui::makeRect(static_cast<int16_t>(slot.x + 7), static_cast<int16_t>(slot.y + 7),
+                                          static_cast<int16_t>(slot.width - 14), static_cast<int16_t>(slot.height - 14));
+    target.fill(inner, fui::Paint::dither(fui::Color::DarkGray), kRadius / 2);
+    target.stroke(inner, kBlack, 2, kRadius / 2);
+    const fui::Rect halo = centred(static_cast<int16_t>(slot.x + slot.width / 2),
+                                   static_cast<int16_t>(slot.y + slot.height / 2 - 30), 52, 52);
+    target.fill(halo, kWhite, 26);
+    target.stroke(halo, kBlack, 2, 26);
+    icon(screen, centred(static_cast<int16_t>(halo.x + 26), static_cast<int16_t>(halo.y + 10), 32, 32), icon_skull_32);
   }
-  const int16_t limitX = static_cast<int16_t>(textX + valueW + 12);
-  target.text(fui::makeRect(limitX, static_cast<int16_t>(box.y + 50), static_cast<int16_t>(box.right() - limitX - 8),
-                            toybox::kButtonCut.lineHeight),
-              line, style(toybox::kSmallFont, fui::TextAlign::Left));
+  char line[8];
+  std::snprintf(line, sizeof(line), "%d", g.deckLen);
+  badge(screen, slot, line, 56);
+  deskLabel(screen, slot, "DECK");
+}
+
+void drawHero(toybox::Screen& screen, const fui::Rect& slot, const s::Game& g) {
+  auto& target = screen.target();
+  target.fill(slot, kWhite, kRadius);
+  target.stroke(slot, kBlack, 4, kRadius);
+  icon(screen, centred(static_cast<int16_t>(slot.x + slot.width / 2), static_cast<int16_t>(slot.y + 6), 96, 96),
+       icon_hero_96);
+  // "17/20": the health large, the maximum small, sharing a baseline.
+  const int hp = g.hp < 0 ? 0 : g.hp;
+  char big[8];
+  char small[8];
+  std::snprintf(big, sizeof(big), "%d", hp);
+  std::snprintf(small, sizeof(small), "/%d", g.maxHp);
+  const fui::TextStyle bigStyle = style(toybox::kDisplayFont, fui::TextAlign::Left);
+  const fui::TextStyle smallStyle = style(toybox::kSmallFont, fui::TextAlign::Left);
+  const int16_t bw = target.measureText(bigStyle.font, big, bigStyle).width;
+  const int16_t sw = target.measureText(smallStyle.font, small, smallStyle).width;
+  const int16_t x = static_cast<int16_t>(slot.x + (slot.width - bw - sw - 2) / 2);
+  const int16_t y = static_cast<int16_t>(slot.y + 108);
+  target.text(toybox::inkCentred(fui::makeRect(x, y, static_cast<int16_t>(bw + 2), 40), toybox::kDisplayCut), big,
+              bigStyle);
+  target.text(fui::makeRect(static_cast<int16_t>(x + bw + 2), static_cast<int16_t>(y + 18), static_cast<int16_t>(sw + 4),
+                            toybox::kTileCut.lineHeight),
+              small, smallStyle);
+  deskLabel(screen, slot, "HEALTH");
+}
+
+void drawWeaponSlot(toybox::Screen& screen, const fui::Rect& slot, const s::Game& g) {
+  if (g.weapon == s::kNoCard) {
+    cardart::drawCardSlot(screen, slot);
+    icon(screen, centred(static_cast<int16_t>(slot.x + slot.width / 2), static_cast<int16_t>(slot.y + 44), 32, 32),
+         icon_hand_32);
+    screen.target().text(fui::makeRect(slot.x, static_cast<int16_t>(slot.y + 84), slot.width, toybox::kTileCut.lineHeight),
+                         "NO WEAPON", style(toybox::kSmallFont));
+  } else {
+    // The kills stack behind it, one sliver each, as on the phone.
+    const int shown = g.slainLen > 4 ? 4 : g.slainLen;
+    for (int i = shown; i > 0; --i) {
+      const fui::Rect under = fui::makeRect(static_cast<int16_t>(slot.x + 3 * i), static_cast<int16_t>(slot.y - 3 * i),
+                                            slot.width, slot.height);
+      screen.target().fill(under, kWhite, kRadius);
+      screen.target().stroke(under, kBlack, 2, kRadius);
+    }
+    drawFace(screen, slot, g.weapon, 64, toybox::kSmallFont, toybox::kTileCut.lineHeight);
+    if (g.weaponLast >= 0) {
+      char line[12];
+      std::snprintf(line, sizeof(line), "MAX %s", s::rankLabel(s::makeCard(s::Kind::Monster, g.weaponLast)));
+      badge(screen, slot, line, 100);
+    }
+  }
+  deskLabel(screen, slot, "WEAPON");
 }
 
 void chrome(toybox::Screen& screen, const char* title, const char* right) {
@@ -265,11 +429,7 @@ void chrome(toybox::Screen& screen, const char* title, const char* right) {
 }  // namespace
 
 fui::Rect slotRect(const fui::DeviceContext& device, const int slot) {
-  const int16_t w = cardW(device);
-  const int column = slot % 2;
-  const int row = slot / 2;
-  return fui::makeRect(static_cast<int16_t>(kSide + column * (w + kGap)),
-                       static_cast<int16_t>(tableTop() + row * (kCardH + kGap)), w, kCardH);
+  return fui::makeRect(static_cast<int16_t>(roomLeft(device) + slot * (kCardW + kRoomGap)), kRoomTop, kCardW, kCardH);
 }
 
 int slotAt(const fui::DeviceContext& device, const int x, const int y) {
@@ -282,41 +442,42 @@ int slotAt(const fui::DeviceContext& device, const int x, const int y) {
 
 void noteText(const s::Game& g, char* out, const int size) {
   const char* name = g.noteCard == s::kNoCard ? "" : s::cardName(g.noteCard);
+  const size_t n = static_cast<size_t>(size);
   switch (g.note) {
     case s::Note::NewGame:
-      std::snprintf(out, static_cast<size_t>(size), "TAP A CARD TO FACE IT");
+      std::snprintf(out, n, "TAP A CARD TO FACE IT");
       return;
     case s::Note::SlewWithWeapon:
       if (g.noteAmount > 0) {
-        std::snprintf(out, static_cast<size_t>(size), "SLEW THE %s. TOOK %d.", name, g.noteAmount);
+        std::snprintf(out, n, "SLEW THE %s: -%d", name, g.noteAmount);
       } else {
-        std::snprintf(out, static_cast<size_t>(size), "SLEW THE %s UNHARMED", name);
+        std::snprintf(out, n, "SLEW THE %s UNHARMED", name);
       }
       return;
     case s::Note::TooDull:
-      std::snprintf(out, static_cast<size_t>(size), "TOO DULL. BARE HANDS: TOOK %d.", g.noteAmount);
+      std::snprintf(out, n, "TOO DULL. BARE HANDS: -%d", g.noteAmount);
       return;
     case s::Note::BareHands:
-      std::snprintf(out, static_cast<size_t>(size), "FOUGHT THE %s. TOOK %d.", name, g.noteAmount);
+      std::snprintf(out, n, "FOUGHT THE %s: -%d", name, g.noteAmount);
       return;
     case s::Note::Equipped:
-      std::snprintf(out, static_cast<size_t>(size), "EQUIPPED THE %s", name);
+      std::snprintf(out, n, "EQUIPPED THE %s", name);
       return;
     case s::Note::Drank:
       if (g.noteAmount > 0) {
-        std::snprintf(out, static_cast<size_t>(size), "DRANK A POTION. +%d HP.", g.noteAmount);
+        std::snprintf(out, n, "DRANK A POTION: +%d", g.noteAmount);
       } else {
-        std::snprintf(out, static_cast<size_t>(size), "DRANK A POTION AT FULL HEALTH");
+        std::snprintf(out, n, "ALREADY AT FULL HEALTH");
       }
       return;
     case s::Note::Wasted:
-      std::snprintf(out, static_cast<size_t>(size), "ONE POTION PER ROOM. WASTED.");
+      std::snprintf(out, n, "ONE POTION PER ROOM: WASTED");
       return;
     case s::Note::Fled:
-      std::snprintf(out, static_cast<size_t>(size), "YOU FLED TO THE NEXT ROOM");
+      std::snprintf(out, n, "YOU FLED TO THE NEXT ROOM");
       return;
     case s::Note::CannotFlee:
-      std::snprintf(out, static_cast<size_t>(size), "YOU CANNOT FLEE TWICE IN A ROW");
+      std::snprintf(out, n, "NOT TWICE IN A ROW");
       return;
     case s::Note::None:
     default:
@@ -378,7 +539,7 @@ void buildMenu(toybox::Screen& screen, const MenuModel& model) {
   const int16_t areaTop = static_cast<int16_t>(line.bottom() + 6 + toybox::kRule);
   const int16_t room = static_cast<int16_t>(listTop - areaTop);
   const int16_t w = 150;
-  const int16_t h = 180;
+  const int16_t h = 200;
   if (room >= h + 20) {
     const int16_t top = static_cast<int16_t>(areaTop + (room - h) / 2);
     const int16_t centre = static_cast<int16_t>(content.x + content.width / 2);
@@ -389,17 +550,7 @@ void buildMenu(toybox::Screen& screen, const MenuModel& model) {
     for (int i : {0, 2, 1}) {
       const fui::Rect r = fui::makeRect(static_cast<int16_t>(centre - w / 2 + offsets[i]),
                                         static_cast<int16_t>(top + drops[i]), w, h);
-      auto& target = screen.target();
-      target.fill(r, kWhite, kRadius);
-      target.stroke(r, kBlack, 2, kRadius);
-      target.text(toybox::inkCentred(fui::makeRect(static_cast<int16_t>(r.x + 10), static_cast<int16_t>(r.y + 4), 60,
-                                                   toybox::kDisplayCut.lineHeight),
-                                     toybox::kDisplayCut),
-                  s::rankLabel(fan[i]), style(toybox::kDisplayFont, fui::TextAlign::Left));
-      icon(screen, fui::makeRect(static_cast<int16_t>(r.right() - 34), static_cast<int16_t>(r.y + 12), 24, 24),
-           markFor(fan[i]));
-      icon(screen, fui::makeRect(static_cast<int16_t>(r.x + (w - 96) / 2), static_cast<int16_t>(r.y + 60), 96, 96),
-           artFor(fan[i], true));
+      drawFace(screen, r, fan[i], 96, toybox::kSmallFont, toybox::kButtonCut.lineHeight);
     }
   }
 }
@@ -456,25 +607,14 @@ void buildHowTo(toybox::Screen& screen, const HowToModel& model) {
   for (const uint8_t c : kLessons[page].cards) n += c != s::kNoCard;
   if (n == 0) return;
   const int16_t w = 132;
-  const int16_t h = 180;
+  const int16_t h = 200;
   const int16_t gap = 14;
   const int16_t total = static_cast<int16_t>(n * w + (n - 1) * gap);
   int16_t x = static_cast<int16_t>(area.x + (area.width - total) / 2);
   const int16_t y = static_cast<int16_t>(area.y + 280);
   for (const uint8_t c : kLessons[page].cards) {
     if (c == s::kNoCard) continue;
-    const fui::Rect r = fui::makeRect(x, y, w, h);
-    auto& target = screen.target();
-    target.fill(r, kWhite, kRadius);
-    target.stroke(r, kBlack, 2, kRadius);
-    target.text(toybox::inkCentred(fui::makeRect(static_cast<int16_t>(r.x + 10), static_cast<int16_t>(r.y + 4), 60,
-                                                 toybox::kDisplayCut.lineHeight),
-                                   toybox::kDisplayCut),
-                s::rankLabel(c), style(toybox::kDisplayFont, fui::TextAlign::Left));
-    icon(screen, fui::makeRect(static_cast<int16_t>(r.right() - 34), static_cast<int16_t>(r.y + 12), 24, 24),
-         markFor(c));
-    icon(screen, fui::makeRect(static_cast<int16_t>(r.x + (w - 96) / 2), static_cast<int16_t>(r.y + 60), 96, 96),
-         artFor(c, true));
+    drawFace(screen, fui::makeRect(x, y, w, h), c, 96, toybox::kSmallFont, toybox::kButtonCut.lineHeight);
     x = static_cast<int16_t>(x + w + gap);
   }
 }
@@ -483,61 +623,74 @@ void buildHowTo(toybox::Screen& screen, const HowToModel& model) {
 
 void buildBoard(toybox::Screen& screen, const BoardModel& model) {
   const s::Game& g = model.game;
-  char title[16];
-  std::snprintf(title, sizeof(title), "ROOM %d", g.roomNo);
-  char left[24];
-  std::snprintf(left, sizeof(left), "%d IN DECK", g.deckLen);
-  chrome(screen, title, left);
-  screen.insetContent(fui::Insets{0, toybox::kMargin, toybox::kMargin, toybox::kMargin});
+  const fui::DeviceContext device = screen.device();
+  toybox::absoluteChrome(screen);
 
-  // The bottom control first, so nothing can crowd it out.
+  scene(screen);
+  topBar(screen, g);
+  for (int slot = 0; slot < s::kRoomSize; ++slot) drawRoomCard(screen, model, slot);
+
+  char note[48];
+  noteText(g, note, sizeof(note));
+  screen.target().text(toybox::inkCentred(fui::makeRect(8, kNoteTop, static_cast<int16_t>(device.width - 16), kNoteH),
+                                          toybox::kUiCut),
+                       note, style(toybox::kUiFont));
+  banner(screen);
+
+  drawDeck(screen, deskRect(device, 0), g);
+  drawHero(screen, deskRect(device, 1), g);
+  drawWeaponSlot(screen, deskRect(device, 2), g);
+
+  const int16_t side = 12;
+  const fui::Rect strip =
+      fui::makeRect(side, kButtonsTop, static_cast<int16_t>(device.width - side * 2), toybox::kPillHeight);
   if (g.over) {
     fui::ButtonProps verdict;
     verdict.label = g.won ? "YOU SURVIVED" : "YOU DIED";
     verdict.action = ActionSeeResult;
-    screen.button(verdict, screen.takeBottom(toybox::kPillHeight, toybox::kGutter));
+    screen.button(verdict, strip);
+    return;
+  }
+  const int16_t half = static_cast<int16_t>((strip.width - side) / 2);
+  fui::ButtonProps fresh;
+  fresh.label = "NEW GAME";
+  fresh.action = ActionNewGame;
+  fresh.styles = toybox::rowStyles();
+  screen.button(fresh, fui::makeRect(strip.x, strip.y, half, strip.height));
+
+  const fui::Rect fleeRect = fui::makeRect(static_cast<int16_t>(strip.right() - half), strip.y, half, strip.height);
+  if (s::canFlee(g)) {
+    fui::ButtonProps fleeButton;
+    fleeButton.label = "FLEE ROOM";
+    fleeButton.icon = fui::bitmapFromIcon(icon_flee_24);
+    fleeButton.action = ActionFlee;
+    fleeButton.gap = 6;
+    screen.button(fleeButton, fleeRect);
   } else {
-    const fui::Rect strip = screen.takeBottom(toybox::kPillHeight, toybox::kGutter);
-    if (s::canFlee(g)) {
-      fui::ButtonProps fleeButton;
-      fleeButton.label = "FLEE THIS ROOM";
-      fleeButton.action = ActionFlee;
-      fleeButton.styles = toybox::rowStyles();
-      screen.button(fleeButton, strip);
-    } else {
-      // Not a control while it cannot be used: a caption in a grey frame, so
-      // it reads as spent rather than as a button that ignores you.
-      screen.target().stroke(strip, fui::Paint::dither(fui::Color::DarkGray), 2);
-      screen.target().text(toybox::inkCentred(strip, toybox::kButtonCut),
-                           g.fledLast ? "FLED LAST ROOM: FACE THIS ONE" : "FLEE ONLY FROM A FULL ROOM",
-                           style(toybox::kSmallFont));
-    }
+    // Spent rather than hidden: a grey frame, and the reason in place of the verb.
+    screen.target().stroke(fleeRect, fui::Paint::dither(fui::Color::DarkGray), 2);
+    screen.target().text(toybox::inkCentred(fleeRect, toybox::kUiCut), g.fledLast ? "JUST FLED" : "NO ESCAPE",
+                         style(toybox::kUiFont));
   }
+}
 
-  for (int slot = 0; slot < s::kRoomSize; ++slot) drawSlot(screen, model, slot);
-
-  const fui::DeviceContext device = screen.device();
-  const fui::Rect lastCard = slotRect(device, 3);
-  const int16_t stripTop = static_cast<int16_t>(lastCard.bottom() + kGap);
-  const int16_t stripH = 92;
-  const int16_t healthW = 168;
-  drawHealth(screen, fui::makeRect(kSide, stripTop, healthW, stripH), g);
-  drawWeapon(screen,
-             fui::makeRect(static_cast<int16_t>(kSide + healthW + kGap), stripTop,
-                           static_cast<int16_t>(device.width - kSide * 2 - healthW - kGap), stripH),
-             g);
-
-  char note[64];
-  noteText(g, note, sizeof(note));
-  const fui::Rect content = screen.contentRect();
-  const int16_t noteTop = static_cast<int16_t>(stripTop + stripH);
-  const int16_t noteH = static_cast<int16_t>(content.bottom() - noteTop);
-  if (noteH > 10) {
-    screen.target().text(toybox::inkCentred(fui::makeRect(kSide, noteTop, static_cast<int16_t>(device.width - kSide * 2),
-                                                          noteH),
-                                            toybox::kButtonCut),
-                         note, style(toybox::kSmallFont));
-  }
+void buildConfirm(toybox::Screen& screen) {
+  chrome(screen, "NEW DUNGEON?", nullptr);
+  screen.insetContent(fui::Insets{toybox::kGutter * 3, toybox::kMargin, toybox::kMargin, toybox::kMargin});
+  fui::ButtonProps keep;
+  keep.label = "KEEP PLAYING";
+  keep.action = ActionKeepPlaying;
+  keep.styles = toybox::rowStyles();
+  screen.button(keep, screen.takeBottom(toybox::kPillHeight, toybox::kGutter));
+  fui::ButtonProps abandon;
+  abandon.label = "FIND ANOTHER DUNGEON";
+  abandon.action = ActionAbandon;
+  screen.button(abandon, screen.takeBottom(toybox::kPillHeight, toybox::kGutter));
+  const fui::Rect area = screen.body();
+  fui::TextStyle body = style(toybox::kBodyFont);
+  body.maxLines = 3;
+  screen.target().text(fui::makeRect(area.x, static_cast<int16_t>(area.y + 40), area.width, 120),
+                       "ABANDON THIS DUNGEON? YOUR CURRENT RUN WILL BE LOST.", body);
 }
 
 // ---- result ---------------------------------------------------------------

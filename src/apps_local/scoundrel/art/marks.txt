@@ -4,3 +4,6 @@ sword    = lucide-sword
 flask    = lucide-flask-conical
 heart    = lucide-heart
 hand     = lucide-hand
+deck     = lucide-rectangle-vertical
+menu     = lucide-menu
+flee     = lucide-door-open

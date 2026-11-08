@@ -88,11 +88,11 @@ static void testNames() {
   CHECK(std::strcmp(s::cardName(M(10, 1)), "BEAST") == 0);
   CHECK(std::strcmp(s::cardName(M(11)), "JACK") == 0);
   CHECK(std::strcmp(s::cardName(M(14)), "ACE") == 0);
-  CHECK(std::strcmp(s::cardName(W(3)), "DAGGER") == 0);
-  CHECK(std::strcmp(s::cardName(W(5)), "SHORTSWORD") == 0);
-  CHECK(std::strcmp(s::cardName(W(9)), "GREATSWORD") == 0);
-  CHECK(std::strcmp(s::cardName(P(3)), "SMALL POTION") == 0);
-  CHECK(std::strcmp(s::cardName(P(10)), "LARGE POTION") == 0);
+  CHECK(std::strcmp(s::cardName(W(3)), "KNIFE") == 0);
+  CHECK(std::strcmp(s::cardName(W(5)), "DAGGER") == 0);
+  CHECK(std::strcmp(s::cardName(W(9)), "AXE") == 0);
+  CHECK(std::strcmp(s::cardName(P(3)), "VIAL") == 0);
+  CHECK(std::strcmp(s::cardName(P(10)), "ELIXIR") == 0);
   CHECK(std::strcmp(s::rankLabel(M(14)), "A") == 0);
   CHECK(std::strcmp(s::rankLabel(W(10)), "10") == 0);
 }

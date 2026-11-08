@@ -98,16 +98,17 @@ const char* cardName(const uint8_t card) {
       if (v <= 6) return "SKELETON";
       if (v <= 8) return "ORC";
       return "BEAST";
+    // Named after their pictures, and short enough for a 110px card.
     case Kind::Weapon:
-      if (v <= 3) return "DAGGER";
-      if (v <= 5) return "SHORTSWORD";
-      if (v <= 8) return "LONGSWORD";
-      return "GREATSWORD";
+      if (v <= 3) return "KNIFE";
+      if (v <= 5) return "DAGGER";
+      if (v <= 8) return "SWORDS";
+      return "AXE";
     case Kind::Potion:
     default:
-      if (v <= 3) return "SMALL POTION";
+      if (v <= 3) return "VIAL";
       if (v <= 8) return "POTION";
-      return "LARGE POTION";
+      return "ELIXIR";
   }
 }
 
