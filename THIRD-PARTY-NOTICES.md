@@ -29,11 +29,10 @@ device.
 are drawn from it. Full text at `src/apps_local/solitaire/art/OFL.txt`, with the
 derivation documented in `src/apps_local/solitaire/art/README.md`.
 
-**Scoundrel's card art**: icons from game-icons.net (CC BY 3.0, Lorc,
-Delapouite and other contributors), Font Awesome Free (CC BY 4.0) and Pinhead
-Map Icons (CC0), rasterised into `src/apps_local/scoundrel/ScoundrelArt.h` at
-authoring time. Which icon is whose, and the SVGs, are in
-`src/apps_local/scoundrel/art/`.
+**Scoundrel's card art**: icons from game-icons.net, CC BY 3.0, by Lorc,
+Delapouite and other contributors, rasterised into
+`src/apps_local/scoundrel/ScoundrelArt.h` at authoring time. Which icon is
+which, and the SVGs, are in `src/apps_local/scoundrel/art/`.
 
 **Astloch, Grenze and Space Grotesk**, SIL Open Font License 1.1, the
 phone version's faces. Scoundrel's font cuts are rasterised from them into
