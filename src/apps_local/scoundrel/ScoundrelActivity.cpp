@@ -30,7 +30,7 @@ constexpr int kSaveBytes = 640;
 namespace sf = scoundrelfonts;
 
 // The phone's faces in the component slots too, so buttons and list rows match
-// the text the screens draw: Space Grotesk, with Pirata One as the title.
+// the text the screens draw: Space Grotesk, with Grenze Bold as the title.
 toybox::Faces boardFaces() { return toybox::Faces{sf::kSmallId, sf::kLargeId, sf::kValueId}; }
 
 int faceId(const ui::Face face) {

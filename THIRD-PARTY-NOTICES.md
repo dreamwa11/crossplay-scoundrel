@@ -29,14 +29,13 @@ device.
 are drawn from it. Full text at `src/apps_local/solitaire/art/OFL.txt`, with the
 derivation documented in `src/apps_local/solitaire/art/README.md`.
 
-**Fluent UI Emoji**, MIT, Copyright (c) Microsoft Corporation, from
-[microsoft/fluentui-emoji](https://github.com/microsoft/fluentui-emoji).
-Scoundrel's card art is rasterised from the "High Contrast" SVGs into
-`src/apps_local/scoundrel/ScoundrelArt.h` at authoring time. Full text and the
-SVGs at `src/apps_local/scoundrel/art/`. Its hero is "Cowled" by Lorc from
-[game-icons.net](https://game-icons.net), CC BY 3.0.
+**Scoundrel's card art**: icons from game-icons.net (CC BY 3.0, Lorc,
+Delapouite and other contributors), Font Awesome Free (CC BY 4.0) and Pinhead
+Map Icons (CC0), rasterised into `src/apps_local/scoundrel/ScoundrelArt.h` at
+authoring time. Which icon is whose, and the SVGs, are in
+`src/apps_local/scoundrel/art/`.
 
-**Astloch, Pirata One and Space Grotesk**, SIL Open Font License 1.1, the
+**Astloch, Grenze and Space Grotesk**, SIL Open Font License 1.1, the
 phone version's faces. Scoundrel's font cuts are rasterised from them into
 `src/apps_local/scoundrel/fonts/`; the fonts and their licence texts are in
 `src/apps_local/scoundrel/fonts/source/`.

@@ -11,7 +11,7 @@ constexpr toybox::CutMetrics kBodyCut{24, 19, 14};  // scnd_body
 constexpr toybox::CutMetrics kLargeCut{29, 23, 17};  // scnd_large
 constexpr toybox::CutMetrics kLogoCut{57, 44, 43};  // scnd_logo
 constexpr toybox::CutMetrics kSmallCut{19, 15, 11};  // scnd_small
-constexpr toybox::CutMetrics kValueCut{43, 34, 28};  // scnd_value
-constexpr toybox::CutMetrics kValueBigCut{64, 51, 41};  // scnd_value_big
+constexpr toybox::CutMetrics kValueCut{65, 49, 27};  // scnd_value
+constexpr toybox::CutMetrics kValueBigCut{93, 69, 38};  // scnd_value_big
 
 }  // namespace scoundrelfonts
