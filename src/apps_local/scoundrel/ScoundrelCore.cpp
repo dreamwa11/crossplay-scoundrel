@@ -89,26 +89,25 @@ const char* cardName(const uint8_t card) {
   const int v = valueOf(card);
   switch (kindOf(card)) {
     case Kind::Monster:
-      if (v == 11) return "JACK";
-      if (v == 12) return "QUEEN";
-      if (v == 13) return "KING";
-      if (v == 14) return "ACE";
-      if (v == 2) return "GOBLIN";
-      if (v <= 4) return "WOLF";
-      if (v <= 6) return "SKELETON";
-      if (v <= 8) return "ORC";
-      return "BEAST";
-    // Named after their pictures, and short enough for a 110px card.
+      if (v == 11) return "Jack";
+      if (v == 12) return "Queen";
+      if (v == 13) return "King";
+      if (v == 14) return "Ace";
+      if (v == 2) return "Goblin";
+      if (v <= 4) return "Wolf";
+      if (v <= 6) return "Skeleton";
+      if (v <= 8) return "Orc";
+      return "Beast";
     case Kind::Weapon:
-      if (v <= 3) return "KNIFE";
-      if (v <= 5) return "DAGGER";
-      if (v <= 8) return "SWORDS";
-      return "AXE";
+      if (v <= 3) return "Dagger";
+      if (v <= 5) return "Shortsword";
+      if (v <= 8) return "Longsword";
+      return "Greatsword";
     case Kind::Potion:
     default:
-      if (v <= 3) return "VIAL";
-      if (v <= 8) return "POTION";
-      return "ELIXIR";
+      if (v <= 3) return "Small potion";
+      if (v <= 8) return "Potion";
+      return "Large potion";
   }
 }
 

@@ -60,6 +60,18 @@ struct ResultModel {
   int best = 0;
 };
 
+// Text faces. The screens draw their own text in the phone's three families;
+// the activity binds the one asked for into a spare font slot just before
+// each string is drawn.
+enum class Face : uint8_t { Small = 0, Body, Large, Value, ValueBig, Logo };
+
+struct FontBinder {
+  virtual ~FontBinder() = default;
+  // Bind `face` into font slot `slot` of the target being drawn on.
+  virtual void bind(fui::FontId slot, Face face) = 0;
+};
+void useFonts(FontBinder* binder);
+
 // The rect of a room slot, and its inverse. Card bodies are hit-tested from the
 // same geometry that drew them; the chips under them are ordinary buttons.
 fui::Rect slotRect(const fui::DeviceContext& device, int slot);
@@ -71,7 +83,8 @@ constexpr int16_t encodeCard(const int slot, const scoundrel::Mode mode) {
 inline int decodeSlot(const int16_t value) { return value / 4; }
 inline scoundrel::Mode decodeMode(const int16_t value) { return static_cast<scoundrel::Mode>(value % 4); }
 
-// The message line under the table, from the core's note. Upper case.
+// The message strip, from the core's note, in the phone version's words.
+// Empty for a new dungeon: the strip then shows the logo instead.
 void noteText(const scoundrel::Game& game, char* out, int size);
 
 void buildMenu(toybox::Screen& screen, const MenuModel& model);

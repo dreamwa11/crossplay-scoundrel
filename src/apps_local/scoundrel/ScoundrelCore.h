@@ -50,7 +50,7 @@ inline bool isMonster(const uint8_t card) { return card != kNoCard && kindOf(car
 
 // The corner index: 2..10, J, Q, K, A. Static storage.
 const char* rankLabel(uint8_t card);
-// "GOBLIN", "LONGSWORD", "POTION". Upper case, the fork's voice.
+// "Goblin", "Longsword", "Small potion": the phone version's names, sentence case.
 const char* cardName(uint8_t card);
 
 // What a tap on a monster means.

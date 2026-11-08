@@ -22,7 +22,9 @@ The SVGs are used unchanged and rasterised to 1-bit at build time.
 | Vial (2-3) | Test tube |
 | Potion (4-8) | Alembic |
 | Elixir (9-10) | Amphora |
-| The hero | Ninja |
+
+The hero (`hero.svg`) is "Cowled" by Lorc from [game-icons.net](https://game-icons.net),
+[CC BY 3.0](https://creativecommons.org/licenses/by/3.0/), recoloured black.
 
 The `lucide-*.svg` files are from [Lucide](https://lucide.dev) (ISC licence),
 already vendored by the FreeInk SDK.

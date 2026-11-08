@@ -13,6 +13,7 @@
 #include "../ui/ToyboxFonts.h"
 #include "../ui/ToyboxSeed.h"
 #include "../ui/ToyboxTheme.h"
+#include "ScoundrelFonts.h"
 
 namespace sc = scoundrel;
 namespace ui = scoundrelui;
@@ -26,10 +27,36 @@ constexpr char kSavePath[] = "/.crosspoint/scoundrel.sav";
 // fit with room to spare.
 constexpr int kSaveBytes = 640;
 
-// The board's faces: card names and desk labels in the tile cut, chips,
-// buttons and the message line in the UI cut, values and the room in the
-// display cut.
-toybox::Faces boardFaces() { return toybox::Faces{toybox::kTileFontId, toybox::kUiFontId, toybox::kDisplayFontId}; }
+namespace sf = scoundrelfonts;
+
+// The phone's faces in the component slots too, so buttons and list rows match
+// the text the screens draw: Space Grotesk, with Pirata One as the title.
+toybox::Faces boardFaces() { return toybox::Faces{sf::kSmallId, sf::kLargeId, sf::kValueId}; }
+
+int faceId(const ui::Face face) {
+  switch (face) {
+    case ui::Face::Small:
+      return sf::kSmallId;
+    case ui::Face::Body:
+      return sf::kBodyId;
+    case ui::Face::Large:
+      return sf::kLargeId;
+    case ui::Face::Value:
+      return sf::kValueId;
+    case ui::Face::ValueBig:
+      return sf::kValueBigId;
+    case ui::Face::Logo:
+    default:
+      return sf::kLogoId;
+  }
+}
+
+// Lets the screens choose a face per string without knowing the renderer.
+struct TargetFonts final : ui::FontBinder {
+  freeink::ui::GfxRendererTarget& target;
+  explicit TargetFonts(freeink::ui::GfxRendererTarget& t) : target(t) {}
+  void bind(const freeink::ui::FontId slot, const ui::Face face) override { target.setFont(slot, faceId(face)); }
+};
 }  // namespace
 
 std::unique_ptr<Activity> ScoundrelActivity::create(GfxRenderer& renderer, MappedInputManager& mappedInput) {
@@ -39,6 +66,7 @@ std::unique_ptr<Activity> ScoundrelActivity::create(GfxRenderer& renderer, Mappe
 void ScoundrelActivity::onEnter() {
   Activity::onEnter();
   toybox::ensureFonts(renderer);
+  sf::ensure(renderer);
   load();
   // Straight back into a dungeon in progress: the shelf already took two taps.
   screen = hasGame ? ui::Screen::Board : ui::Screen::Menu;
@@ -283,10 +311,9 @@ void ScoundrelActivity::render(RenderLock&&) {
   namespace fui = freeink::ui;
 
   renderer.clearScreen();
-  const toybox::Faces faces = screen == ui::Screen::Board    ? boardFaces()
-                              : screen == ui::Screen::Result ? toybox::bigNumberFaces()
-                                                             : toybox::proseMenuFaces();
-  fui::GfxRendererTarget target = toybox::makeTarget(renderer, faces);
+  fui::GfxRendererTarget target = toybox::makeTarget(renderer, boardFaces());
+  TargetFonts fonts(target);
+  ui::useFonts(&fonts);
   const fui::DeviceContext device = target.deviceContext();
   const fui::InputSnapshot noInput{};
   interactionsReady = false;
@@ -330,6 +357,7 @@ void ScoundrelActivity::render(RenderLock&&) {
     }
   }
 
+  ui::useFonts(nullptr);
   interactionsReady = true;
   toybox::reportOverflow(interactions, "Scoundrel");
 

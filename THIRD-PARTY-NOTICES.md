@@ -33,7 +33,13 @@ derivation documented in `src/apps_local/solitaire/art/README.md`.
 [microsoft/fluentui-emoji](https://github.com/microsoft/fluentui-emoji).
 Scoundrel's card art is rasterised from the "High Contrast" SVGs into
 `src/apps_local/scoundrel/ScoundrelArt.h` at authoring time. Full text and the
-SVGs at `src/apps_local/scoundrel/art/`.
+SVGs at `src/apps_local/scoundrel/art/`. Its hero is "Cowled" by Lorc from
+[game-icons.net](https://game-icons.net), CC BY 3.0.
+
+**Astloch, Pirata One and Space Grotesk**, SIL Open Font License 1.1, the
+phone version's faces. Scoundrel's font cuts are rasterised from them into
+`src/apps_local/scoundrel/fonts/`; the fonts and their licence texts are in
+`src/apps_local/scoundrel/fonts/source/`.
 
 **"celtic" chess pieces**, MIT, Copyright (c) Maurizio Monge, from
 [maurimo/chess-art](https://github.com/maurimo/chess-art). Chess's board art is

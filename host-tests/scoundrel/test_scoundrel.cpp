@@ -81,18 +81,18 @@ static void testDeck() {
 }
 
 static void testNames() {
-  CHECK(std::strcmp(s::cardName(M(2)), "GOBLIN") == 0);
-  CHECK(std::strcmp(s::cardName(M(4)), "WOLF") == 0);
-  CHECK(std::strcmp(s::cardName(M(6)), "SKELETON") == 0);
-  CHECK(std::strcmp(s::cardName(M(8)), "ORC") == 0);
-  CHECK(std::strcmp(s::cardName(M(10, 1)), "BEAST") == 0);
-  CHECK(std::strcmp(s::cardName(M(11)), "JACK") == 0);
-  CHECK(std::strcmp(s::cardName(M(14)), "ACE") == 0);
-  CHECK(std::strcmp(s::cardName(W(3)), "KNIFE") == 0);
-  CHECK(std::strcmp(s::cardName(W(5)), "DAGGER") == 0);
-  CHECK(std::strcmp(s::cardName(W(9)), "AXE") == 0);
-  CHECK(std::strcmp(s::cardName(P(3)), "VIAL") == 0);
-  CHECK(std::strcmp(s::cardName(P(10)), "ELIXIR") == 0);
+  CHECK(std::strcmp(s::cardName(M(2)), "Goblin") == 0);
+  CHECK(std::strcmp(s::cardName(M(4)), "Wolf") == 0);
+  CHECK(std::strcmp(s::cardName(M(6)), "Skeleton") == 0);
+  CHECK(std::strcmp(s::cardName(M(8)), "Orc") == 0);
+  CHECK(std::strcmp(s::cardName(M(10, 1)), "Beast") == 0);
+  CHECK(std::strcmp(s::cardName(M(11)), "Jack") == 0);
+  CHECK(std::strcmp(s::cardName(M(14)), "Ace") == 0);
+  CHECK(std::strcmp(s::cardName(W(3)), "Dagger") == 0);
+  CHECK(std::strcmp(s::cardName(W(5)), "Shortsword") == 0);
+  CHECK(std::strcmp(s::cardName(W(9)), "Greatsword") == 0);
+  CHECK(std::strcmp(s::cardName(P(3)), "Small potion") == 0);
+  CHECK(std::strcmp(s::cardName(P(10)), "Large potion") == 0);
   CHECK(std::strcmp(s::rankLabel(M(14)), "A") == 0);
   CHECK(std::strcmp(s::rankLabel(W(10)), "10") == 0);
 }
