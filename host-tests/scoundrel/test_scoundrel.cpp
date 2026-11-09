@@ -78,6 +78,10 @@ static void testDeck() {
   CHECK(a.maxHp == 20);
   s::start(a, 1, 25);
   CHECK(a.maxHp == 25 && a.hp == 25);
+  s::start(a, 1, 50);
+  CHECK(a.maxHp == 50 && a.hp == 50);
+  s::start(a, 1, 15);
+  CHECK(a.maxHp == 20);
 }
 
 static void testNames() {

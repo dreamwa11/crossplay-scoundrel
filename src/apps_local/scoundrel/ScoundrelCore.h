@@ -35,8 +35,8 @@ constexpr int kDeckSize = 44;
 constexpr int kRoomSize = 4;
 constexpr int kResolvePerRoom = 3;
 constexpr int kDefaultHp = 20;
-constexpr int kMinHp = 10;
-constexpr int kMaxHp = 30;
+constexpr int kMinHp = 20;
+constexpr int kMaxHp = 50;
 // A weapon can slay at most every monster in the deck.
 constexpr int kMaxSlain = 26;
 

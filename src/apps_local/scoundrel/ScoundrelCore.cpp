@@ -347,7 +347,8 @@ bool parse(const char* text, Game& out) {
     g.room[slot] = static_cast<uint8_t>(c);
   }
   g.hp = static_cast<int8_t>(take(-100, kMaxHp));
-  g.maxHp = static_cast<int8_t>(take(kMinHp, kMaxHp));
+  // Older saves allowed a maximum as low as 10; a game in progress keeps its own.
+  g.maxHp = static_cast<int8_t>(take(10, kMaxHp));
   {
     const long c = take(0, 255);
     if (!validCard(c, true) || (c != kNoCard && kindOf(static_cast<uint8_t>(c)) != Kind::Weapon)) ok = false;
