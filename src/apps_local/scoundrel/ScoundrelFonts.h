@@ -14,6 +14,7 @@ constexpr int kLargeId = 0x5C0D'0003;     // Space Grotesk 500, ~17px caps
 constexpr int kValueId = 0x5C0D'0004;     // Scoundrel Gothic, ~28px caps
 constexpr int kValueBigId = 0x5C0D'0005;  // Scoundrel Gothic, ~41px caps
 constexpr int kLogoId = 0x5C0D'0006;      // Astloch Bold
+constexpr int kTitleId = 0x5C0D'0007;     // Astloch Bold, the death screen's headline
 
 void ensure(GfxRenderer& renderer);
 

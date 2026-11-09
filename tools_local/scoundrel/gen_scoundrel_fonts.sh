@@ -50,6 +50,7 @@ gen() {  # name size ttf
   echo "wrote $OUT/$1.h"
 }
 gen scnd_logo 22 astloch
+gen scnd_title 34 astloch
 gen scnd_value 20 gothic
 gen scnd_value_big 27 gothic
 gen scnd_small 7 grotesk600

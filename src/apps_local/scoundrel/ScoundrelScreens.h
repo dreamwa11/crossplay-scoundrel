@@ -63,7 +63,7 @@ struct ResultModel {
 // Text faces. The screens draw their own text in the phone's three families;
 // the activity binds the one asked for into a spare font slot just before
 // each string is drawn.
-enum class Face : uint8_t { Small = 0, Body, Large, Value, ValueBig, Logo };
+enum class Face : uint8_t { Small = 0, Body, Large, Value, ValueBig, Logo, Title };
 
 struct FontBinder {
   virtual ~FontBinder() = default;

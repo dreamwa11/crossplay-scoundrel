@@ -8,6 +8,7 @@
 #include "fonts/scnd_large.h"
 #include "fonts/scnd_logo.h"
 #include "fonts/scnd_small.h"
+#include "fonts/scnd_title.h"
 #include "fonts/scnd_value.h"
 #include "fonts/scnd_value_big.h"
 
@@ -20,12 +21,14 @@ EpdFont large(&scnd_large);
 EpdFont value(&scnd_value);
 EpdFont valueBig(&scnd_value_big);
 EpdFont logo(&scnd_logo);
+EpdFont title(&scnd_title);
 EpdFontFamily smallFamily(&small);
 EpdFontFamily bodyFamily(&body);
 EpdFontFamily largeFamily(&large);
 EpdFontFamily valueFamily(&value);
 EpdFontFamily valueBigFamily(&valueBig);
 EpdFontFamily logoFamily(&logo);
+EpdFontFamily titleFamily(&title);
 bool registered = false;
 
 }  // namespace
@@ -38,6 +41,7 @@ void ensure(GfxRenderer& renderer) {
   renderer.insertFont(kValueId, valueFamily);
   renderer.insertFont(kValueBigId, valueBigFamily);
   renderer.insertFont(kLogoId, logoFamily);
+  renderer.insertFont(kTitleId, titleFamily);
   registered = true;
 }
 

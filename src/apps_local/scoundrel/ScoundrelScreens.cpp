@@ -41,6 +41,8 @@ const toybox::CutMetrics& cutOf(const Face face) {
       return sf::kValueCut;
     case Face::ValueBig:
       return sf::kValueBigCut;
+    case Face::Title:
+      return sf::kTitleCut;
     case Face::Logo:
     default:
       return sf::kLogoCut;
@@ -732,8 +734,59 @@ void buildConfirm(toybox::Screen& screen) {
 
 // ---- result ---------------------------------------------------------------
 
+namespace {
+
+// The death screen: the whole panel. A headline, the grave with the run
+// carved into its stone, what is left of the dungeon, and the way out.
+void buildDeath(toybox::Screen& screen, const ResultModel& model) {
+  const s::Game& g = model.game;
+  auto& target = screen.target();
+  const int16_t w = screen.device().width;
+  toybox::absoluteChrome(screen);
+
+  say(screen, fui::makeRect(0, 14, w, 92), "You died", Face::Title);
+  constexpr int16_t kPictureTop = 108;
+  const fui::Rect picture = fui::makeRect(0, kPictureTop, w, 380);
+  target.bitmap(picture, fui::bitmapFromIcon(scene_died), fui::BitmapMode::Center, kBlack);
+
+  // Carved into the stone.
+  const int16_t fx = kDiedFaceX, fy = static_cast<int16_t>(kPictureTop + kDiedFaceY), fw = kDiedFaceW;
+  char line[48];
+  say(screen, fui::makeRect(fx, static_cast<int16_t>(fy + 4), fw, 20), "HERE LIES", Face::Small);
+  say(screen, fui::makeRect(fx, static_cast<int16_t>(fy + 24), fw, 20), "A SCOUNDREL", Face::Small);
+  target.fill(fui::makeRect(static_cast<int16_t>(fx + fw / 2 - 30), static_cast<int16_t>(fy + 52), 60, 2), kBlack);
+  std::snprintf(line, sizeof(line), "Room %d", g.roomNo);
+  say(screen, fui::makeRect(fx, static_cast<int16_t>(fy + 60), fw, 48), line, Face::Value);
+  say(screen, fui::makeRect(fx, static_cast<int16_t>(fy + 116), fw, 20), "SCORE", Face::Small);
+  std::snprintf(line, sizeof(line), "%d", g.score);
+  say(screen, fui::makeRect(fx, static_cast<int16_t>(fy + 136), fw, 60), line, Face::ValueBig);
+
+  const int16_t rows = static_cast<int16_t>(picture.bottom() + 10);
+  const int left = s::monstersLeft(g);
+  std::snprintf(line, sizeof(line), left == 1 ? "1 monster still in the dungeon." : "%d monsters still in the dungeon.",
+                left);
+  say(screen, fui::makeRect(0, rows, w, 34), line, Face::Large);
+  if (model.newBest) {
+    std::snprintf(line, sizeof(line), "A new best score!");
+  } else {
+    std::snprintf(line, sizeof(line), "Best: %d", model.best);
+  }
+  say(screen, fui::makeRect(0, static_cast<int16_t>(rows + 34), w, 34), line, Face::Large);
+
+  screen.setContentMarginAbsolute(fui::Insets{static_cast<int16_t>(rows + 76), toybox::kMargin, toybox::kMargin,
+                                              toybox::kMargin});
+  screen.button(pill("Menu", ActionDone, false), screen.takeBottom(toybox::kPillHeight, toybox::kGutter));
+  screen.button(pill("Start another dungeon", ActionAgain), screen.takeBottom(toybox::kPillHeight, toybox::kGutter));
+}
+
+}  // namespace
+
 void buildResult(toybox::Screen& screen, const ResultModel& model) {
   const s::Game& g = model.game;
+  if (!g.won) {
+    buildDeath(screen, model);
+    return;
+  }
   toybox::absoluteChrome(screen);
   title(screen, g.won ? "You survived!" : "You died");
 

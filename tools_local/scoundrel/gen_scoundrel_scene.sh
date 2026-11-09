@@ -1,6 +1,6 @@
 #!/bin/bash
 # Regenerate src/apps_local/scoundrel/ScoundrelScene.h: the room scene above the
-# cards (480x178, 1-bit), drawn by draw_scene.py. Three walls with different
+# cards (480x178, 1-bit), and the death screen's grave (480x380), drawn by draw_scene.py. Three walls with different
 # bricks; rooms take turns. Drawn at half strength (every other black pixel
 # knocked out) so the scene reads as grey and the cards stay in front.
 # Needs rsvg-convert and Pillow.
@@ -14,7 +14,11 @@ for i in "${!SEEDS[@]}"; do
   python3 tools_local/scoundrel/draw_scene.py "$TMP/scene$i.svg" "${SEEDS[$i]}"
   rsvg-convert "$TMP/scene$i.svg" -o "$TMP/scene$i.png"
 done
-python3 - "$TMP" "$OUT" "${#SEEDS[@]}" <<'PY'
+# The death screen's picture: wall and floor at half strength, the grave in full.
+FACE="$(python3 tools_local/scoundrel/draw_died.py "$TMP/died")"
+rsvg-convert "$TMP/died_back.svg" -o "$TMP/died_back.png"
+rsvg-convert "$TMP/died_front.svg" -o "$TMP/died_front.png"
+python3 - "$TMP" "$OUT" "${#SEEDS[@]}" "$FACE" <<'PY'
 import sys
 from PIL import Image
 tmp, out, n = sys.argv[1], sys.argv[2], int(sys.argv[3])
@@ -35,6 +39,31 @@ for i in range(n):
             data.append(b)
     lines.append(f'static const uint8_t scene_room{i}_bits[] = {{' + ','.join(f'0x{b:02X}' for b in data) + '};')
     lines.append(f'static const freeink::Icon scene_room{i} = {{{w}, {h}, {h // 2}, scene_room{i}_bits}};')
+# The death picture: back layer knocked out like the rooms, front layer on top.
+back = Image.open(f'{tmp}/died_back.png').convert('RGBA'); front = Image.open(f'{tmp}/died_front.png').convert('RGBA')
+w, h = back.size; bp = back.load(); fp = front.load()
+data = []
+for y in range(h):
+    for bx in range(0, w, 8):
+        b = 0
+        for k in range(8):
+            x = bx + k
+            white = True
+            if x < w:
+                r, g, bl, a = fp[x, y]
+                if a > 128:
+                    white = (r * 299 + g * 587 + bl * 114) / 1000 >= 128
+                else:
+                    r, g, bl, a = bp[x, y]
+                    dark = a > 128 and (r * 299 + g * 587 + bl * 114) / 1000 < 128
+                    white = not dark or (x + y) % 2 == 1
+            b = (b << 1) | (1 if white else 0)
+        data.append(b)
+lines.append('static const uint8_t scene_died_bits[] = {' + ','.join(f'0x{b:02X}' for b in data) + '};')
+lines.append(f'static const freeink::Icon scene_died = {{{w}, {h}, {h // 2}, scene_died_bits}};')
+_, fx, fy, fw, fh = sys.argv[4].split()
+lines.append(f'// The tombstone\'s blank face, inside scene_died.')
+lines.append(f'static constexpr int16_t kDiedFaceX = {fx}, kDiedFaceY = {fy}, kDiedFaceW = {fw}, kDiedFaceH = {fh};')
 lines.append(f'static const freeink::Icon* const kRoomScenes[] = {{' + ', '.join(f'&scene_room{i}' for i in range(n)) + '};')
 lines.append(f'static constexpr int kRoomSceneCount = {n};')
 open(out, 'w').write('\n'.join(lines) + '\n')

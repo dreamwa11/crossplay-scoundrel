@@ -11,6 +11,7 @@ constexpr toybox::CutMetrics kBodyCut{24, 19, 14};  // scnd_body
 constexpr toybox::CutMetrics kLargeCut{29, 23, 17};  // scnd_large
 constexpr toybox::CutMetrics kLogoCut{57, 44, 43};  // scnd_logo
 constexpr toybox::CutMetrics kSmallCut{19, 15, 11};  // scnd_small
+constexpr toybox::CutMetrics kTitleCut{87, 68, 65};  // scnd_title
 constexpr toybox::CutMetrics kValueCut{48, 38, 30};  // scnd_value
 constexpr toybox::CutMetrics kValueBigCut{65, 52, 39};  // scnd_value_big
 

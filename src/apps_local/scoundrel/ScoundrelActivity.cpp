@@ -45,6 +45,8 @@ int faceId(const ui::Face face) {
       return sf::kValueId;
     case ui::Face::ValueBig:
       return sf::kValueBigId;
+    case ui::Face::Title:
+      return sf::kTitleId;
     case ui::Face::Logo:
     default:
       return sf::kLogoId;
