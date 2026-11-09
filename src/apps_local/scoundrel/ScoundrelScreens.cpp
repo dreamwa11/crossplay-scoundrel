@@ -9,6 +9,7 @@
 #include "../cards/CardArt.h"
 #include "../ui/ToyboxFormat.h"
 #include "ScoundrelArt.h"
+#include "ScoundrelScene.h"
 #include "fonts/ScoundrelCuts.h"
 
 namespace scoundrelui {
@@ -292,10 +293,9 @@ void topBar(toybox::Screen& screen, const s::Game& g) {
   counter(icon_deck_24, g.deckLen + s::roomCount(g));
   counter(icon_skull_24, s::monstersLeft(g));
 
-  // The room's name in whatever is left between the counters and the menu.
+  // The room's name, centred on the panel like the phone's.
   std::snprintf(line, sizeof(line), "Room %d", g.roomNo);
-  const int16_t right = static_cast<int16_t>(w - 12 - 46 - 6);
-  say(screen, fui::makeRect(x, 0, static_cast<int16_t>(right - x), kTopBarH), line, Face::Value);
+  say(screen, fui::makeRect(0, 0, w, kTopBarH), line, Face::Value);
 
   fui::ButtonProps menu;
   menu.icon = fui::bitmapFromIcon(icon_menu_24);
@@ -308,32 +308,17 @@ void topBar(toybox::Screen& screen, const s::Game& g) {
 
 // The doorway in a brick wall, as on the phone. It never changes, so it costs
 // no ghosting.
-void scene(toybox::Screen& screen) {
+void scene(toybox::Screen& screen, const int roomNo) {
   auto& target = screen.target();
   const int16_t w = screen.device().width;
   const int16_t top = kTopBarH + 2;
-  target.fill(fui::makeRect(0, top, w, static_cast<int16_t>(kSceneBottom - top)),
-              fui::Paint::dither(fui::Color::LightGray));
-  constexpr int16_t kCourse = 22;
-  constexpr int16_t kBrick = 56;
-  int row = 0;
-  for (int16_t y = static_cast<int16_t>(top + kCourse); y < kSceneBottom; y = static_cast<int16_t>(y + kCourse), ++row) {
-    target.fill(fui::makeRect(0, y, w, 2), kWhite);
-    const int16_t offset = (row % 2) ? kBrick / 2 : 0;
-    for (int16_t x = offset; x < w; x = static_cast<int16_t>(x + kBrick)) {
-      target.fill(fui::makeRect(x, static_cast<int16_t>(y - kCourse + 2), 2, static_cast<int16_t>(kCourse - 2)), kWhite);
-    }
-  }
-  const int16_t doorW = 168;
-  const fui::Rect frame = centred(static_cast<int16_t>(w / 2), static_cast<int16_t>(top + 18),
-                                  static_cast<int16_t>(doorW + 28), 300);
-  target.fill(frame, kWhite, static_cast<uint8_t>((doorW + 28) / 2));
-  target.stroke(frame, kBlack, 3, static_cast<uint8_t>((doorW + 28) / 2));
-  const fui::Rect door = centred(static_cast<int16_t>(w / 2), static_cast<int16_t>(top + 32), doorW, 300);
-  target.fill(door, kGrey, static_cast<uint8_t>(doorW / 2));
-  target.stroke(door, kBlack, 3, static_cast<uint8_t>(doorW / 2));
-  // The floor the room is dealt onto.
-  target.fill(fui::makeRect(0, kSceneBottom, w, static_cast<int16_t>(kStripTop - kSceneBottom)), kWhite);
+  // A drawn stone room: walls of varied, cracked and broken bricks, an arched
+  // doorway and two torches. Three walls take turns from room to room.
+  const freeink::Icon& art = *kRoomScenes[(roomNo > 0 ? roomNo - 1 : 0) % kRoomSceneCount];
+  const fui::Rect band = fui::makeRect(0, top, w, kSceneBottom - top);
+  target.fill(band, kWhite);
+  target.bitmap(band, fui::bitmapFromIcon(art), fui::BitmapMode::Center, kBlack);
+  target.fill(fui::makeRect(0, kSceneBottom, w, kStripTop - kSceneBottom), kWhite);
   target.fill(fui::makeRect(0, kSceneBottom, w, 2), kBlack);
 }
 
@@ -698,7 +683,7 @@ void buildBoard(toybox::Screen& screen, const BoardModel& model) {
   const fui::DeviceContext device = screen.device();
   toybox::absoluteChrome(screen);
 
-  scene(screen);
+  scene(screen, g.roomNo);
   topBar(screen, g);
   for (int slot = 0; slot < s::kRoomSize; ++slot) drawRoomCard(screen, model, slot);
   strip(screen, g);
