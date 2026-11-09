@@ -406,10 +406,15 @@ void drawHero(toybox::Screen& screen, const fui::Rect& slot, const s::Game& g) {
   char big[8];
   char small[8];
   std::snprintf(big, sizeof(big), "%d", hp);
-  std::snprintf(small, sizeof(small), "/%d", g.maxHp);
+  std::snprintf(small, sizeof(small), "%d", g.maxHp);
+  // The slash is drawn rather than set: the gothic one hangs below the
+  // baseline onto the health bar. This one runs from baseline to cap height.
+  constexpr int16_t kSlashW = 10;
+  constexpr int16_t kSlashGap = 3;
   const int16_t bw = widthOf(screen, big, Face::ValueBig);
   const int16_t sw = widthOf(screen, small, Face::Value);
-  const int16_t x = static_cast<int16_t>(slot.x + (slot.width - bw - sw - 2) / 2);
+  const int16_t total = static_cast<int16_t>(bw + kSlashGap + kSlashW + kSlashGap + sw);
+  const int16_t x = static_cast<int16_t>(slot.x + (slot.width - total) / 2);
   // Both cuts sit on one baseline: the big one's box is placed, the small one
   // drops by the difference in their cap heights.
   const int16_t numberTop = static_cast<int16_t>(slot.y + 96);
@@ -417,8 +422,16 @@ void drawHero(toybox::Screen& screen, const fui::Rect& slot, const s::Game& g) {
   say(screen, fui::makeRect(x, numberTop, static_cast<int16_t>(bw + 4), numberH), big, Face::ValueBig,
       fui::TextAlign::Left);
   const int16_t drop = static_cast<int16_t>((sf::kValueBigCut.inkHeight - sf::kValueCut.inkHeight) / 2);
-  say(screen, fui::makeRect(static_cast<int16_t>(x + bw + 2), static_cast<int16_t>(numberTop + drop),
-                            static_cast<int16_t>(sw + 4), numberH),
+  const int16_t smallTop = static_cast<int16_t>(numberTop + drop);
+  const int16_t baseline = static_cast<int16_t>(smallTop + (numberH + sf::kValueCut.inkHeight) / 2);
+  const int16_t ink = sf::kValueCut.inkHeight;
+  const int16_t slashX = static_cast<int16_t>(x + bw + kSlashGap);
+  for (int16_t i = 0; i < ink; ++i) {
+    const int16_t dx = static_cast<int16_t>((kSlashW - 3) * i / (ink - 1));
+    target.fill(fui::makeRect(static_cast<int16_t>(slashX + dx), static_cast<int16_t>(baseline - 1 - i), 3, 1), kBlack);
+  }
+  say(screen, fui::makeRect(static_cast<int16_t>(slashX + kSlashW + kSlashGap), smallTop, static_cast<int16_t>(sw + 4),
+                            numberH),
       small, Face::Value, fui::TextAlign::Left);
   const fui::Rect bar = fui::makeRect(static_cast<int16_t>(slot.x + 6), static_cast<int16_t>(slot.bottom() - 6),
                                       static_cast<int16_t>(slot.width - 12), 8);
@@ -769,7 +782,7 @@ void buildDeath(toybox::Screen& screen, const ResultModel& model) {
   if (model.newBest) {
     std::snprintf(line, sizeof(line), "A new best score!");
   } else {
-    std::snprintf(line, sizeof(line), "Best: %d", model.best);
+    std::snprintf(line, sizeof(line), "Best score: %d", model.best);
   }
   say(screen, fui::makeRect(0, static_cast<int16_t>(rows + 34), w, 34), line, Face::Large);
 
@@ -808,7 +821,7 @@ void buildSurvived(toybox::Screen& screen, const ResultModel& model) {
   if (model.newBest) {
     std::snprintf(line, sizeof(line), "A new best score!");
   } else {
-    std::snprintf(line, sizeof(line), "Best: %d", model.best);
+    std::snprintf(line, sizeof(line), "Best score: %d", model.best);
   }
   say(screen, fui::makeRect(0, static_cast<int16_t>(top + 92), w, 32), line, Face::Large);
 
