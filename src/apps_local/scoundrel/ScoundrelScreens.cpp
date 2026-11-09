@@ -779,48 +779,52 @@ void buildDeath(toybox::Screen& screen, const ResultModel& model) {
   screen.button(pill("Start another dungeon", ActionAgain), screen.takeBottom(toybox::kPillHeight, toybox::kGutter));
 }
 
+// The survivor's screen, built like the death screen: a headline, the way
+// out of the dungeon into daylight, then the run in numbers.
+void buildSurvived(toybox::Screen& screen, const ResultModel& model) {
+  const s::Game& g = model.game;
+  auto& target = screen.target();
+  const int16_t w = screen.device().width;
+  toybox::absoluteChrome(screen);
+
+  say(screen, fui::makeRect(0, 14, w, 92), "You survived!", Face::Title);
+  constexpr int16_t kPictureTop = 108;
+  const fui::Rect picture = fui::makeRect(0, kPictureTop, w, 380);
+  target.bitmap(picture, fui::bitmapFromIcon(scene_survived), fui::BitmapMode::Center, kBlack);
+
+  // "SCORE 26": the label and the number on one line, centred together.
+  char line[48];
+  std::snprintf(line, sizeof(line), "%d", g.score);
+  const int16_t top = static_cast<int16_t>(picture.bottom() + 6);
+  const int16_t lw = widthOf(screen, "SCORE", Face::Small);
+  const int16_t nw = widthOf(screen, line, Face::ValueBig);
+  const int16_t x = static_cast<int16_t>((w - lw - 12 - nw) / 2);
+  say(screen, fui::makeRect(x, top, static_cast<int16_t>(lw + 4), 60), "SCORE", Face::Small, fui::TextAlign::Left);
+  say(screen, fui::makeRect(static_cast<int16_t>(x + lw + 12), top, static_cast<int16_t>(nw + 4), 60), line,
+      Face::ValueBig, fui::TextAlign::Left);
+
+  std::snprintf(line, sizeof(line), "Cleared in %d rooms, %d health left.", g.roomNo, g.hp);
+  say(screen, fui::makeRect(0, static_cast<int16_t>(top + 60), w, 32), line, Face::Large);
+  if (model.newBest) {
+    std::snprintf(line, sizeof(line), "A new best score!");
+  } else {
+    std::snprintf(line, sizeof(line), "Best: %d", model.best);
+  }
+  say(screen, fui::makeRect(0, static_cast<int16_t>(top + 92), w, 32), line, Face::Large);
+
+  screen.setContentMarginAbsolute(fui::Insets{static_cast<int16_t>(top + 130), toybox::kMargin, toybox::kMargin,
+                                              toybox::kMargin});
+  screen.button(pill("Menu", ActionDone, false), screen.takeBottom(toybox::kPillHeight, toybox::kGutter));
+  screen.button(pill("Start another dungeon", ActionAgain), screen.takeBottom(toybox::kPillHeight, toybox::kGutter));
+}
+
 }  // namespace
 
 void buildResult(toybox::Screen& screen, const ResultModel& model) {
-  const s::Game& g = model.game;
-  if (!g.won) {
+  if (model.game.won) {
+    buildSurvived(screen, model);
+  } else {
     buildDeath(screen, model);
-    return;
-  }
-  toybox::absoluteChrome(screen);
-  title(screen, g.won ? "You survived!" : "You died");
-
-  screen.button(pill("Menu", ActionDone, false), screen.takeBottom(toybox::kPillHeight, toybox::kGutter));
-  screen.button(pill("Start another dungeon", ActionAgain), screen.takeBottom(toybox::kPillHeight, toybox::kGutter));
-
-  const fui::Rect area = screen.body();
-  say(screen, fui::makeRect(area.x, static_cast<int16_t>(area.y + 20), area.width, 30), "SCORE", Face::Small);
-  char line[64];
-  std::snprintf(line, sizeof(line), "%d", g.score);
-  say(screen, fui::makeRect(area.x, static_cast<int16_t>(area.y + 56), area.width, 60), line, Face::ValueBig);
-
-  int16_t y = static_cast<int16_t>(area.y + 150);
-  const int16_t lineH = 36;
-  auto row = [&](const char* text) {
-    say(screen, fui::makeRect(area.x, y, area.width, lineH), text, Face::Large);
-    y = static_cast<int16_t>(y + lineH);
-  };
-  if (g.won) {
-    std::snprintf(line, sizeof(line), "Cleared the dungeon in %d rooms.", g.roomNo);
-    row(line);
-    std::snprintf(line, sizeof(line), "%d health left.", g.hp);
-    row(line);
-  } else {
-    std::snprintf(line, sizeof(line), "Fell in room %d.", g.roomNo);
-    row(line);
-    std::snprintf(line, sizeof(line), "%d monsters still in the dungeon.", s::monstersLeft(g));
-    row(line);
-  }
-  if (model.newBest) {
-    row("A new best score!");
-  } else {
-    std::snprintf(line, sizeof(line), "Best: %d", model.best);
-    row(line);
   }
 }
 

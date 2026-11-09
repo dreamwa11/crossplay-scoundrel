@@ -18,6 +18,10 @@ done
 FACE="$(python3 tools_local/scoundrel/draw_died.py "$TMP/died")"
 rsvg-convert "$TMP/died_back.svg" -o "$TMP/died_back.png"
 rsvg-convert "$TMP/died_front.svg" -o "$TMP/died_front.png"
+# And the survivor's: the last archway, and the daylight through it.
+python3 tools_local/scoundrel/draw_survived.py "$TMP/survived"
+rsvg-convert "$TMP/survived_back.svg" -o "$TMP/survived_back.png"
+rsvg-convert "$TMP/survived_front.svg" -o "$TMP/survived_front.png"
 python3 - "$TMP" "$OUT" "${#SEEDS[@]}" "$FACE" <<'PY'
 import sys
 from PIL import Image
@@ -39,28 +43,31 @@ for i in range(n):
             data.append(b)
     lines.append(f'static const uint8_t scene_room{i}_bits[] = {{' + ','.join(f'0x{b:02X}' for b in data) + '};')
     lines.append(f'static const freeink::Icon scene_room{i} = {{{w}, {h}, {h // 2}, scene_room{i}_bits}};')
-# The death picture: back layer knocked out like the rooms, front layer on top.
-back = Image.open(f'{tmp}/died_back.png').convert('RGBA'); front = Image.open(f'{tmp}/died_front.png').convert('RGBA')
-w, h = back.size; bp = back.load(); fp = front.load()
-data = []
-for y in range(h):
-    for bx in range(0, w, 8):
-        b = 0
-        for k in range(8):
-            x = bx + k
-            white = True
-            if x < w:
-                r, g, bl, a = fp[x, y]
-                if a > 128:
-                    white = (r * 299 + g * 587 + bl * 114) / 1000 >= 128
-                else:
-                    r, g, bl, a = bp[x, y]
-                    dark = a > 128 and (r * 299 + g * 587 + bl * 114) / 1000 < 128
-                    white = not dark or (x + y) % 2 == 1
-            b = (b << 1) | (1 if white else 0)
-        data.append(b)
-lines.append('static const uint8_t scene_died_bits[] = {' + ','.join(f'0x{b:02X}' for b in data) + '};')
-lines.append(f'static const freeink::Icon scene_died = {{{w}, {h}, {h // 2}, scene_died_bits}};')
+# The end pictures: back layer knocked out like the rooms, front layer on top.
+def layered(name):
+    back = Image.open(f'{tmp}/{name}_back.png').convert('RGBA'); front = Image.open(f'{tmp}/{name}_front.png').convert('RGBA')
+    w, h = back.size; bp = back.load(); fp = front.load()
+    data = []
+    for y in range(h):
+        for bx in range(0, w, 8):
+            b = 0
+            for k in range(8):
+                x = bx + k
+                white = True
+                if x < w:
+                    r, g, bl, a = fp[x, y]
+                    if a > 128:
+                        white = (r * 299 + g * 587 + bl * 114) / 1000 >= 128
+                    else:
+                        r, g, bl, a = bp[x, y]
+                        dark = a > 128 and (r * 299 + g * 587 + bl * 114) / 1000 < 128
+                        white = not dark or (x + y) % 2 == 1
+                b = (b << 1) | (1 if white else 0)
+            data.append(b)
+    lines.append(f'static const uint8_t scene_{name}_bits[] = {{' + ','.join(f'0x{b:02X}' for b in data) + '};')
+    lines.append(f'static const freeink::Icon scene_{name} = {{{w}, {h}, {h // 2}, scene_{name}_bits}};')
+layered('died')
+layered('survived')
 _, fx, fy, fw, fh = sys.argv[4].split()
 lines.append(f'// The tombstone\'s blank face, inside scene_died.')
 lines.append(f'static constexpr int16_t kDiedFaceX = {fx}, kDiedFaceY = {fy}, kDiedFaceW = {fw}, kDiedFaceH = {fh};')
