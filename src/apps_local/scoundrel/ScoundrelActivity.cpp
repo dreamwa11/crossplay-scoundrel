@@ -166,6 +166,11 @@ void ScoundrelActivity::play(const int slot, const sc::Mode mode) {
   if (!sc::resolve(game, slot, mode)) return;
   if (game.over) {
     recordResult();
+    // A death goes straight to its own screen; a survival waits on the table.
+    if (!game.won) {
+      goTo(ui::Screen::Result);
+      return;
+    }
   } else {
     save();
   }
