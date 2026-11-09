@@ -198,8 +198,15 @@ void ScoundrelActivity::loop() {
       case ui::Screen::Confirm:
         goTo(ui::Screen::Board);
         return;
-      case ui::Screen::Result:
       case ui::Screen::HowTo:
+        if (howToPage > 0) {
+          --howToPage;
+          requestUpdate();
+        } else {
+          goTo(ui::Screen::Menu);
+        }
+        return;
+      case ui::Screen::Result:
       case ui::Screen::Board:
         save();
         goTo(ui::Screen::Menu);
@@ -231,13 +238,22 @@ void ScoundrelActivity::loop() {
           goTo(ui::Screen::HowTo);
           return;
         case ui::MenuRow::Health:
-          // 10, 15, 20, 25, 30 and round again. Applies from the next dungeon.
+          // 20, 25 ... 50 and round again. Applies from the next dungeon.
           maxHp = maxHp + 5 > sc::kMaxHp ? sc::kMinHp : maxHp + 5;
           save();
           requestUpdate();
           return;
         case ui::MenuRow::Count:
           return;
+      }
+      return;
+
+    case ui::ActionHowToBack:
+      if (howToPage > 0) {
+        --howToPage;
+        requestUpdate();
+      } else {
+        goTo(ui::Screen::Menu);
       }
       return;
 

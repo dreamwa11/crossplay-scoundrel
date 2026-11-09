@@ -31,6 +31,8 @@ enum : fui::ActionId {
   ActionNewGame = 9,
   ActionAbandon = 10,
   ActionKeepPlaying = 11,
+  // How to play: a page back, or out to the menu from the first.
+  ActionHowToBack = 12,
 };
 
 enum class Screen : uint8_t { Menu = 0, HowTo, Board, Result, Confirm };

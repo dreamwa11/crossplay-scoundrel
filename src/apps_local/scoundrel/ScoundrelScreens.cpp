@@ -635,31 +635,164 @@ void buildMenu(toybox::Screen& screen, const MenuModel& model) {
 }
 
 // ---- how to play ----------------------------------------------------------
+//
+// Six pages, each a short rule and a worked example drawn from the table's own
+// parts: cards, the choices under a monster, the weapon pile, the flee button.
+// The examples are pictures, not controls; the flee button is drawn grey to
+// say so.
 
 namespace {
 
-struct Lesson {
-  const char* text;
-  uint8_t cards[3];
+const char* const kLessons[] = {
+    "You are a scoundrel delving into a dungeon built from a deck of 44 cards. Clear every card while staying alive.",
+    "Each room shows 4 cards. Once you have handled 3, the room refills from the deck. The card you left behind "
+    "stays where it was.",
+    "Monsters hit for their number. Fight bare-handed and take it all, or use your weapon and take only the "
+    "difference.",
+    "Weapons dull: once it has a kill, a weapon only hits monsters equal to or weaker than its last kill.",
+    "Potions heal up to your maximum health. Only one per room counts; a second is wasted.",
+    "Before you touch a full room you may flee with this button: its cards go to the bottom of the deck. Never two "
+    "rooms in a row.",
 };
 
-const Lesson kLessons[] = {
-    {"You are a scoundrel delving into a dungeon built from a deck of 44 cards. Clear every card while staying "
-     "alive.",
-     {0x40 | 0x0C, 0x10 | 0x05, 0x20 | 0x06}},
-    {"Each room shows 4 cards. Once you have handled 3, the room refills from the deck. The card you left behind "
-     "stays.",
-     {0x00 | 0x02, 0x10 | 0x01, 0x20 | 0x03}},
-    {"Monsters hit for their number. Fight bare-handed and take it all, or use your weapon and take only the "
-     "difference.",
-     {0x00 | 0x07, 0x10 | 0x03, s::kNoCard}},
-    {"Weapons dull: once it has a kill, a weapon only hits monsters equal to or weaker than its last kill.",
-     {0x00 | 0x09, 0x10 | 0x07, 0x40 | 0x0B}},
-    {"Potions heal up to your maximum health. Only one per room counts; a second is wasted.",
-     {0x20 | 0x01, 0x20 | 0x07, s::kNoCard}},
-    {"Before touching a full room you may flee: its cards go to the bottom of the deck. Never two rooms in a row.",
-     {s::kNoCard, s::kNoCard, s::kNoCard}},
-};
+const fui::Paint kLight = fui::Paint::dither(fui::Color::LightGray);
+
+// A choice as it looks under a room card, drawn only: nothing to tap here.
+void chipArt(toybox::Screen& screen, const fui::Rect& box, const char* label, const freeink::Icon& art,
+             const bool loud) {
+  auto& target = screen.target();
+  target.fill(box, loud ? kBlack : kWhite, 8);
+  target.stroke(box, kBlack, 2, 8);
+  const int16_t tw = widthOf(screen, label, Face::Body);
+  const int16_t x = static_cast<int16_t>(box.x + (box.width - 28 - tw) / 2);
+  icon(screen, fui::makeRect(x, static_cast<int16_t>(box.y + (box.height - 24) / 2), 24, 24), art, loud);
+  say(screen, fui::makeRect(static_cast<int16_t>(x + 28), box.y, static_cast<int16_t>(tw + 6), box.height), label,
+      Face::Body, fui::TextAlign::Left, loud);
+}
+
+// A monster card with its two choices underneath, as on the table.
+void monsterWithChoices(toybox::Screen& screen, const fui::Rect& card, const uint8_t monster, const int fist,
+                        const int weapon, const int art) {
+  drawFace(screen, card, monster, art);
+  const int16_t half = static_cast<int16_t>((card.width - 4) / 2);
+  const int16_t y = static_cast<int16_t>(card.bottom() + 6);
+  char a[8];
+  std::snprintf(a, sizeof(a), "%d", fist);
+  const bool fistBetter = weapon < 0 || fist <= weapon;
+  chipArt(screen, fui::makeRect(card.x, y, half, kChipH), a, icon_hand_24, weapon >= 0 && fistBetter);
+  const fui::Rect right = fui::makeRect(static_cast<int16_t>(card.right() - half), y, half, kChipH);
+  if (weapon < 0) {
+    spentChip(screen, right);
+  } else {
+    std::snprintf(a, sizeof(a), "%d", weapon);
+    chipArt(screen, right, a, icon_sword_24, !fistBetter);
+  }
+}
+
+void caption(toybox::Screen& screen, const int16_t cx, const int16_t y, const char* text) {
+  say(screen, fui::makeRect(static_cast<int16_t>(cx - 120), y, 240, sf::kSmallCut.lineHeight), text, Face::Small);
+}
+
+void lessonCards(toybox::Screen& screen, const fui::Rect& area) {
+  const uint8_t cards[3] = {s::makeCard(s::Kind::Monster, 12, 1), s::makeCard(s::Kind::Weapon, 7),
+                            s::makeCard(s::Kind::Potion, 8)};
+  const char* labels[3] = {"MONSTER", "WEAPON", "POTION"};
+  const int16_t w = 132, h = 184, gap = 14;
+  int16_t x = static_cast<int16_t>(area.x + (area.width - 3 * w - 2 * gap) / 2);
+  for (int i = 0; i < 3; ++i) {
+    drawFace(screen, fui::makeRect(x, area.y, w, h), cards[i], 96);
+    caption(screen, static_cast<int16_t>(x + w / 2), static_cast<int16_t>(area.y + h + 10), labels[i]);
+    x = static_cast<int16_t>(x + w + gap);
+  }
+}
+
+void lessonRoom(toybox::Screen& screen, const fui::Rect& area) {
+  // The same room twice: three cards handled, the fourth left where it was;
+  // then three new cards from the deck around it.
+  const int16_t w = 104, h = 132, gap = 8;
+  const int16_t left = static_cast<int16_t>(area.x + (area.width - 4 * w - 3 * gap) / 2);
+  const uint8_t kept = s::makeCard(s::Kind::Weapon, 3);
+  const uint8_t fresh[4] = {s::makeCard(s::Kind::Monster, 3), s::makeCard(s::Kind::Potion, 5), kept,
+                            s::makeCard(s::Kind::Monster, 9, 1)};
+  const int16_t rowH = static_cast<int16_t>(h + 44);
+  for (int row = 0; row < 2; ++row) {
+    const int16_t y = static_cast<int16_t>(area.y + row * rowH);
+    for (int slot = 0; slot < 4; ++slot) {
+      const fui::Rect r = fui::makeRect(static_cast<int16_t>(left + slot * (w + gap)), y, w, h);
+      if (row == 0 && slot != 2) {
+        cardart::drawCardSlot(screen, r);
+      } else {
+        drawFace(screen, r, fresh[slot], 48);
+      }
+    }
+    caption(screen, static_cast<int16_t>(area.x + area.width / 2), static_cast<int16_t>(y + h + 8),
+            row == 0 ? "3 HANDLED, ONE LEFT BEHIND" : "3 NEW CARDS, THE OLD ONE STAYS");
+  }
+}
+
+void lessonFight(toybox::Screen& screen, const fui::Rect& area) {
+  // A shortsword (5) against an orc (8): bare hands cost 8, the sword 3.
+  const int16_t w = 120, h = 164, gap = 56;
+  const int16_t x = static_cast<int16_t>(area.x + (area.width - 2 * w - gap) / 2);
+  drawFace(screen, fui::makeRect(x, area.y, w, h), s::makeCard(s::Kind::Weapon, 5), 64);
+  caption(screen, static_cast<int16_t>(x + w / 2), static_cast<int16_t>(area.y + h + 14), "YOUR WEAPON");
+  const fui::Rect monster = fui::makeRect(static_cast<int16_t>(x + w + gap), area.y, w, h);
+  monsterWithChoices(screen, monster, s::makeCard(s::Kind::Monster, 8), 8, 3, 64);
+  caption(screen, static_cast<int16_t>(monster.x + w / 2), static_cast<int16_t>(monster.bottom() + kChipH + 14),
+          "HANDS 8, WEAPON 3");
+}
+
+void lessonDull(toybox::Screen& screen, const fui::Rect& area) {
+  // A greatsword (9) that last slew a 7: it still takes a skeleton (6), but a
+  // jack (11) is bare hands only.
+  const int16_t w = 112, h = 156, gap = 20;
+  int16_t x = static_cast<int16_t>(area.x + (area.width - 3 * w - 2 * gap) / 2);
+  drawFace(screen, fui::makeRect(x, area.y, w, h), s::makeCard(s::Kind::Weapon, 9), 64);
+  drawFace(screen, fui::makeRect(static_cast<int16_t>(x + 6), static_cast<int16_t>(area.y + 40), w - 6,
+                                 static_cast<int16_t>(h - 32)),
+           s::makeCard(s::Kind::Monster, 7), 48);
+  const int16_t capY = static_cast<int16_t>(area.y + h + kChipH + 14);
+  char line[24];
+  std::snprintf(line, sizeof(line), "HITS \xE2\x89\xA4 7");
+  caption(screen, static_cast<int16_t>(x + w / 2), capY, line);
+  x = static_cast<int16_t>(x + w + gap);
+  monsterWithChoices(screen, fui::makeRect(x, area.y, w, h), s::makeCard(s::Kind::Monster, 6), 6, 0, 64);
+  caption(screen, static_cast<int16_t>(x + w / 2), capY, "6: IT CAN HIT");
+  x = static_cast<int16_t>(x + w + gap);
+  monsterWithChoices(screen, fui::makeRect(x, area.y, w, h), s::makeCard(s::Kind::Monster, 11, 1), 11, -1, 64);
+  caption(screen, static_cast<int16_t>(x + w / 2), capY, "J: HANDS ONLY");
+}
+
+void lessonPotions(toybox::Screen& screen, const fui::Rect& area) {
+  // Every potion in the deck, 2 to 10.
+  const int16_t gap = 10;
+  int16_t h = static_cast<int16_t>((area.height - 2 * gap) / 3);
+  if (h > 128) h = 128;
+  const int16_t w = 128;  // wide enough for SMALL POTION
+  const int16_t left = static_cast<int16_t>(area.x + (area.width - 3 * w - 2 * gap) / 2);
+  for (int i = 0; i < 9; ++i) {
+    const fui::Rect r = fui::makeRect(static_cast<int16_t>(left + (i % 3) * (w + gap)),
+                                      static_cast<int16_t>(area.y + (i / 3) * (h + gap)), w, h);
+    drawFace(screen, r, s::makeCard(s::Kind::Potion, i + 2), 48);
+  }
+}
+
+void lessonFlee(toybox::Screen& screen, const fui::Rect& area) {
+  // The table's flee button, greyed: a picture of it, not one to press.
+  auto& target = screen.target();
+  const int16_t w = 300;
+  const fui::Rect b = fui::makeRect(static_cast<int16_t>(area.x + (area.width - w) / 2),
+                                    static_cast<int16_t>(area.y + 30), w, toybox::kPillHeight);
+  target.fill(b, kLight, 10);
+  target.stroke(b, kGrey, 2, 10);
+  const char* label = "Flee room";
+  const int16_t tw = widthOf(screen, label, Face::Large);
+  const int16_t x = static_cast<int16_t>(b.x + (b.width - 32 - tw) / 2);
+  icon(screen, fui::makeRect(x, static_cast<int16_t>(b.y + (b.height - 24) / 2), 24, 24), icon_flee_24);
+  say(screen, fui::makeRect(static_cast<int16_t>(x + 32), b.y, static_cast<int16_t>(tw + 4), b.height), label,
+      Face::Large, fui::TextAlign::Left);
+  caption(screen, static_cast<int16_t>(b.x + w / 2), static_cast<int16_t>(b.bottom() + 12), "AT THE FOOT OF THE TABLE");
+}
 
 }  // namespace
 
@@ -671,28 +804,39 @@ void buildHowTo(toybox::Screen& screen, const HowToModel& model) {
   toybox::absoluteChrome(screen);
   title(screen, "How to play");
 
+  // Back and Next side by side; on the last page Next leads into the dungeon.
+  const fui::Rect bar = screen.takeBottom(toybox::kPillHeight, toybox::kGutter);
+  const int16_t half = static_cast<int16_t>((bar.width - toybox::kGutter) / 2);
+  screen.button(pill("Back", ActionHowToBack, false), fui::makeRect(bar.x, bar.y, half, bar.height));
   screen.button(pill(page + 1 < pages ? "Next" : "Into the dungeon", ActionHowToNext),
-                screen.takeBottom(toybox::kPillHeight, toybox::kGutter));
+                fui::makeRect(static_cast<int16_t>(bar.right() - half), bar.y, half, bar.height));
   char progress[16];
   std::snprintf(progress, sizeof(progress), "%d of %d", page + 1, pages);
   say(screen, screen.takeBottom(28, 4), progress, Face::Small);
 
   const fui::Rect area = screen.body();
-  prose(screen, fui::makeRect(area.x, area.y, area.width, 200), kLessons[page].text, 6);
-
-  int n = 0;
-  for (const uint8_t c : kLessons[page].cards) n += c != s::kNoCard;
-  if (n == 0) return;
-  const int16_t w = 132;
-  const int16_t h = 190;
-  const int16_t gap = 14;
-  const int16_t total = static_cast<int16_t>(n * w + (n - 1) * gap);
-  int16_t x = static_cast<int16_t>(area.x + (area.width - total) / 2);
-  const int16_t y = static_cast<int16_t>(area.y + 230);
-  for (const uint8_t c : kLessons[page].cards) {
-    if (c == s::kNoCard) continue;
-    drawFace(screen, fui::makeRect(x, y, w, h), c, 96);
-    x = static_cast<int16_t>(x + w + gap);
+  prose(screen, fui::makeRect(area.x, area.y, area.width, 130), kLessons[page], 4);
+  const fui::Rect example = fui::makeRect(area.x, static_cast<int16_t>(area.y + 140), area.width,
+                                          static_cast<int16_t>(area.height - 140));
+  switch (page) {
+    case 0:
+      lessonCards(screen, example);
+      break;
+    case 1:
+      lessonRoom(screen, example);
+      break;
+    case 2:
+      lessonFight(screen, example);
+      break;
+    case 3:
+      lessonDull(screen, example);
+      break;
+    case 4:
+      lessonPotions(screen, example);
+      break;
+    default:
+      lessonFlee(screen, example);
+      break;
   }
 }
 
