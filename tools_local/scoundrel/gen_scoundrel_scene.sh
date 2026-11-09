@@ -1,7 +1,9 @@
 #!/bin/bash
 # Regenerate src/apps_local/scoundrel/ScoundrelScene.h: the room scene above the
 # cards (480x178, 1-bit), drawn by draw_scene.py. Three walls with different
-# bricks; rooms take turns. Needs rsvg-convert and Pillow.
+# bricks; rooms take turns. Drawn at half strength (every other black pixel
+# knocked out) so the scene reads as grey and the cards stay in front.
+# Needs rsvg-convert and Pillow.
 set -euo pipefail
 REPO="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/../.." && pwd)"
 cd "$REPO"
@@ -28,7 +30,7 @@ for i in range(n):
             b = 0
             for k in range(8):
                 x = bx + k
-                white = x >= w or px[x, y] >= 128
+                white = x >= w or px[x, y] >= 128 or (x + y) % 2 == 1
                 b = (b << 1) | (1 if white else 0)
             data.append(b)
     lines.append(f'static const uint8_t scene_room{i}_bits[] = {{' + ','.join(f'0x{b:02X}' for b in data) + '};')
