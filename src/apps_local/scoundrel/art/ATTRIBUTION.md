@@ -23,7 +23,7 @@ Each SVG here is the icon named below, recoloured black; it is rasterised to
 | Small potion (2-3) | `game-icons:vial` |
 | Potion (4-8) | `game-icons:round-bottom-flask` |
 | Large potion (9-10) | `game-icons:potion-ball` |
-| The hero | `game-icons:cowled` |
+| The hero | `game-icons:cowled`, scaled down, with shoulders and a cloak clasp added below the hood |
 
 The `lucide-*.svg` files are from [Lucide](https://lucide.dev) (ISC licence),
 already vendored by the FreeInk SDK.
