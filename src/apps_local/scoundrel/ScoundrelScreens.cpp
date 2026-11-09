@@ -265,7 +265,7 @@ void drawRoomCard(toybox::Screen& screen, const BoardModel& model, const int slo
     default:
       if (g.potionUsed) {
         // Taking it does nothing but clear it away: the second potion of a room.
-        chip(screen, row, "waste", &icon_heart_24, false, encodeCard(slot, s::Mode::Auto));
+        chip(screen, row, "waste", nullptr, false, encodeCard(slot, s::Mode::Auto));
       } else {
         int heal = g.maxHp - g.hp;
         if (heal > s::valueOf(card)) heal = s::valueOf(card);
