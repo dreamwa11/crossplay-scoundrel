@@ -175,11 +175,16 @@ void drawFace(toybox::Screen& screen, const fui::Rect& rect, const uint8_t card,
 
   const int16_t nameH = sf::kSmallCut.lineHeight;
   const int16_t nameTop = static_cast<int16_t>(rect.bottom() - nameH - 4);
-  const int16_t room = static_cast<int16_t>(nameTop - rect.y - 38);
+  int16_t room = static_cast<int16_t>(nameTop - rect.y - 38);
+  // A card too short for both (the kills stacked on a weapon) keeps the
+  // picture and drops the name, rather than print one over the other.
+  const bool named = room >= art - 2;
+  if (!named) room = static_cast<int16_t>(rect.bottom() - 4 - rect.y - 38);
   const int16_t artTop = static_cast<int16_t>(rect.y + 38 + (room > art ? (room - art) / 2 : 0));
   icon(screen, centred(static_cast<int16_t>(rect.x + rect.width / 2), artTop, static_cast<int16_t>(art),
                        static_cast<int16_t>(art)),
        artFor(card, art));
+  if (!named) return;
   char name[24];
   upper(s::cardName(card), name, sizeof(name));
   say(screen, fui::makeRect(static_cast<int16_t>(rect.x + 2), nameTop, static_cast<int16_t>(rect.width - 4), nameH),
