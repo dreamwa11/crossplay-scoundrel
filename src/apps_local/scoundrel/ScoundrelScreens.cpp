@@ -160,7 +160,7 @@ void icon(toybox::Screen& screen, const fui::Rect& box, const freeink::Icon& art
 
 // ---- the card face --------------------------------------------------------
 //
-// Kind mark top-left, value top-right in Grenze Bold, the picture, the name in
+// Kind mark top-left, value top-right in Scoundrel Gothic, the picture, the name in
 // small capitals along the bottom: the phone's card, in black and white.
 void drawFace(toybox::Screen& screen, const fui::Rect& rect, const uint8_t card, const int art) {
   auto& target = screen.target();
@@ -395,7 +395,7 @@ void drawDeck(toybox::Screen& screen, const fui::Rect& slot, const s::Game& g) {
 }
 
 // The hero: no frame, so it does not read as one more card. The portrait,
-// then "17/20" in Grenze Bold and a thin health bar.
+// then "17/20" in Scoundrel Gothic and a thin health bar.
 void drawHero(toybox::Screen& screen, const fui::Rect& slot, const s::Game& g) {
   auto& target = screen.target();
   icon(screen, centred(static_cast<int16_t>(slot.x + slot.width / 2), static_cast<int16_t>(slot.y - 4), 96, 96),

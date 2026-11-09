@@ -3,8 +3,9 @@
 #
 # The faces of the phone version, all SIL OFL (texts in fonts/source/):
 #   Astloch Bold      the "Scoundrel" logo
-#   Grenze Bold       card values, the room's name, health and score
-#                     (replaced Pirata One, whose J read as a 1)
+#   Scoundrel Gothic  card values, the room's name, health and score: the
+#                     phone's thinned Germania One (renamed, as its licence
+#                     reserves "Germania")
 #   Space Grotesk     everything else, instanced at a fixed weight
 #
 # 1-bit, ASCII plus two symbols: GfxRenderer's black-and-white path floods antialiased
@@ -37,7 +38,7 @@ def cut(path, out, wght=None):
     sub.subset(font)
     font.save(f"{work}/{out}.ttf")
 cut(f"{src}/Astloch-Bold.ttf", "astloch")
-cut(f"{src}/Grenze[wght].ttf", "grenze", 700)
+cut(f"{src}/ScoundrelGothic.ttf", "gothic")
 cut(f"{src}/SpaceGrotesk[wght].ttf", "grotesk500", 500)
 cut(f"{src}/SpaceGrotesk[wght].ttf", "grotesk600", 600)
 PY
@@ -49,8 +50,8 @@ gen() {  # name size ttf
   echo "wrote $OUT/$1.h"
 }
 gen scnd_logo 22 astloch
-gen scnd_value 21 grenze
-gen scnd_value_big 30 grenze
+gen scnd_value 20 gothic
+gen scnd_value_big 27 gothic
 gen scnd_small 7 grotesk600
 gen scnd_body 9 grotesk500
 gen scnd_large 11 grotesk500

@@ -34,8 +34,9 @@ Delapouite and other contributors, rasterised into
 `src/apps_local/scoundrel/ScoundrelArt.h` at authoring time. Which icon is
 which, and the SVGs, are in `src/apps_local/scoundrel/art/`.
 
-**Astloch, Grenze and Space Grotesk**, SIL Open Font License 1.1, the
-phone version's faces. Scoundrel's font cuts are rasterised from them into
+**Astloch, Scoundrel Gothic and Space Grotesk**, SIL Open Font License 1.1,
+the phone version's faces. Scoundrel Gothic is Germania One by John Vargas
+Beltrán, thinned and renamed as its licence's Reserved Font Name requires. Scoundrel's font cuts are rasterised from them into
 `src/apps_local/scoundrel/fonts/`; the fonts and their licence texts are in
 `src/apps_local/scoundrel/fonts/source/`.
 
