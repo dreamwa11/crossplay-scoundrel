@@ -388,11 +388,11 @@ void testIsOwnHost() {
 // the first source is one the device reports to, so a check counts it on the
 // board; the second is not, and is the fallback that keeps OTA alive.
 void testReleaseSources() {
-  // crossplay-scoundrel-papermono asks its own GitHub releases and nothing else.
+  // crossplay-scoundrel asks its own GitHub releases and nothing else.
   check(release_sources::kCount == 1, "one source: this repository's releases");
   check(!devreport::reportsTo(true, release_sources::kUrls[0]), "github reports nothing");
   check(std::string(release_sources::kUrls[0]) ==
-            "https://api.github.com/repos/dreamwa11/crossplay-scoundrel-papermono/releases/latest",
+            "https://api.github.com/repos/dreamwa11/crossplay-scoundrel/releases/latest",
         "this repository's releases/latest");
 }
 
