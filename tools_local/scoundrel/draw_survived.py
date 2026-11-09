@@ -92,41 +92,11 @@ def canopy(blobs):
 for k in range(26):
     gx = cx - R + 8 + k * (2 * R - 16) / 25 + rnd.uniform(-4, 4)
     gy = rnd.uniform(240, FLOOR - 4)
-    t = (gy - 248) / (FLOOR - 248)
-    if abs(gx - cx) < 15 + 30 * t + 10 and gy > 236: continue   # not on the path
     if cx + 40 < gx < cx + 96 and gy > 272: continue            # not on the rabbit
     f.append(f'<path d="M{gx-6:.1f},{gy:.1f} L{gx-2:.1f},{gy-9:.1f} L{gx:.1f},{gy:.1f} L{gx+3:.1f},{gy-11:.1f} L{gx+5:.1f},{gy:.1f}" fill="none" stroke="#000" stroke-width="1.6"/>')
 for k in range(7):
     fx, fy = rnd.uniform(cx - R + 20, cx + R - 20), rnd.uniform(250, FLOOR - 10)
     f.append(f'<circle cx="{fx:.1f}" cy="{fy:.1f}" r="3.2" fill="#fff" stroke="#000" stroke-width="1.6"/><circle cx="{fx:.1f}" cy="{fy:.1f}" r="1" fill="#000"/>')
-# a path of flagstones out across the meadow: irregular slabs in perspective,
-# nothing like the coursed bricks of the dungeon wall
-def cobble(x0, y0, x1, y1, fill):
-    # a flagstone: a six-cornered slab with its corners nudged about
-    w, h = x1 - x0, y1 - y0
-    base = [(0.08, 0), (0.6, 0), (1, 0.15), (0.94, 1), (0.3, 1), (0, 0.7)]
-    pts = [(x0 + (u + rnd.uniform(-.05, .05)) * w, y0 + (v + rnd.uniform(-.08, .08)) * h) for u, v in base]
-    f.append('<polygon points="' + " ".join(f"{p:.1f},{q:.1f}" for p, q in pts) + f'" fill="{fill}" stroke="#000" stroke-width="2" stroke-linejoin="round"/>')
-    if rnd.random() < 0.25 and w > 20:  # a crack across some
-        cx0 = x0 + w * rnd.uniform(.3, .6)
-        f.append(f'<polyline points="{cx0:.1f},{y0+1:.1f} {cx0+3:.1f},{y0+h*.5:.1f} {cx0-1:.1f},{y1-1:.1f}" fill="none" stroke="#000" stroke-width="1.4"/>')
-y, row = 249.0, 0
-while y < FLOOR - 3:
-    t = (y - 248) / (FLOOR - 248)
-    h = 7 + 12 * t
-    hw = 15 + 30 * t
-    gap = 2 + 1.5 * t
-    if t < 0.2:
-        stones = [(-hw, hw)]
-    elif row % 2:
-        stones = [(-hw, -gap / 2 + hw * .1), (gap / 2 + hw * .1, hw)]
-    else:
-        stones = [(-hw, -hw * .4 - gap / 2), (-hw * .4 + gap / 2, hw * .35 - gap / 2), (hw * .35 + gap / 2, hw)]
-    for (a, b2) in stones:
-        fill = "url(#dots)" if rnd.random() < 0.3 else "#fff"
-        cobble(cx + a, y, cx + b2, min(y + h, FLOOR), fill)
-    y += h + gap
-    row += 1
 # a rabbit sitting in the light, facing the sun
 rx, ry = cx + 70, 300
 f.append(f'<ellipse cx="{rx}" cy="{ry-11}" rx="15" ry="12" fill="#000"/>')
