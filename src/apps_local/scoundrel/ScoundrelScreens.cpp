@@ -694,7 +694,7 @@ void caption(toybox::Screen& screen, const int16_t cx, const int16_t y, const ch
 }
 
 void lessonCards(toybox::Screen& screen, const fui::Rect& area) {
-  const uint8_t cards[3] = {s::makeCard(s::Kind::Monster, 12, 1), s::makeCard(s::Kind::Weapon, 7),
+  const uint8_t cards[3] = {s::makeCard(s::Kind::Monster, 14, 1), s::makeCard(s::Kind::Weapon, 7),
                             s::makeCard(s::Kind::Potion, 8)};
   const char* labels[3] = {"MONSTER", "WEAPON", "POTION"};
   const int16_t w = 132, h = 184, gap = 14;
