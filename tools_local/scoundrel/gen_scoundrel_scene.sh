@@ -1,17 +1,25 @@
 #!/bin/bash
-# Regenerate src/apps_local/scoundrel/ScoundrelScene.h: the room scene above the
-# cards (480x178, 1-bit), and the death screen's grave (480x380), drawn by draw_scene.py. Three walls with different
-# bricks; rooms take turns. Drawn at half strength (every other black pixel
-# knocked out) so the scene reads as grey and the cards stay in front.
+# Regenerate src/apps_local/scoundrel/ScoundrelScene.h: the room scenes above the
+# cards (480x178, 1-bit), four kinds taken in turn (draw_scene.py draws the
+# doorway hall, draw_rooms.py the rest), and the end screens' pictures
+# (480x380). Rooms are drawn at half strength (every other black pixel knocked
+# out) so they read as grey and the cards stay in front.
 # Needs rsvg-convert and Pillow.
 set -euo pipefail
 REPO="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/../.." && pwd)"
 cd "$REPO"
 OUT=src/apps_local/scoundrel/ScoundrelScene.h
 TMP="$(mktemp -d)"; trap 'rm -rf "$TMP"' EXIT
-SEEDS=(7 21 33)
-for i in "${!SEEDS[@]}"; do
-  python3 tools_local/scoundrel/draw_scene.py "$TMP/scene$i.svg" "${SEEDS[$i]}"
+# Four kinds of room, taken in turn: the doorway hall, a corner with a barred
+# window, a beamed cellar, a pillared crypt.
+KINDS=(hall window cellar crypt)
+SEEDS=("${KINDS[@]}")
+for i in "${!KINDS[@]}"; do
+  if [ "${KINDS[$i]}" = hall ]; then
+    python3 tools_local/scoundrel/draw_scene.py "$TMP/scene$i.svg" 7
+  else
+    python3 tools_local/scoundrel/draw_rooms.py "${KINDS[$i]}" "$TMP/scene$i.svg"
+  fi
   rsvg-convert "$TMP/scene$i.svg" -o "$TMP/scene$i.png"
 done
 # The death screen's picture: wall and floor at half strength, the grave in full.

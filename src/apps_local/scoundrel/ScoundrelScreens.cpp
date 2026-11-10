@@ -319,8 +319,8 @@ void scene(toybox::Screen& screen, const int roomNo) {
   auto& target = screen.target();
   const int16_t w = screen.device().width;
   const int16_t top = kTopBarH + 2;
-  // A drawn stone room: walls of varied, cracked and broken bricks, an arched
-  // doorway and two torches. Three walls take turns from room to room.
+  // A drawn room, in grey: a doorway hall, a corner with a barred window, a
+  // beamed cellar or a pillared crypt, taken in turn from room to room.
   const freeink::Icon& art = *kRoomScenes[(roomNo > 0 ? roomNo - 1 : 0) % kRoomSceneCount];
   const fui::Rect band = fui::makeRect(0, top, w, kSceneBottom - top);
   target.fill(band, kWhite);
