@@ -100,6 +100,8 @@ struct Game {
   Note note;
   uint8_t noteCard;
   int8_t noteAmount;
+  // Picks this dungeon's run of room pictures; the rules never read it.
+  uint8_t look;
 };
 
 int roomCount(const Game& game);
@@ -127,6 +129,10 @@ bool canFlee(const Game& game);
 // Returns false when fleeing is not allowed; sets Note::CannotFlee when that is
 // because the last room was fled.
 bool flee(Game& game);
+
+// Which of `kinds` room pictures room `roomNo` shows: a random-looking run
+// fixed by `game.look`, never the same picture twice in a row.
+int roomLook(const Game& game, int roomNo, int kinds);
 
 // Text round trip for the save file: space-separated integers, no line breaks.
 // `parse` validates every field and leaves `out` untouched on failure.

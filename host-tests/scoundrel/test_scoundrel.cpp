@@ -279,6 +279,39 @@ static void testSaveRoundTrip() {
   CHECK(!s::parse(buffer, junk));
   // A buffer too small reports failure rather than a truncated line.
   CHECK(s::serialize(g, buffer, 20) < 0);
+  // A save from before `look` existed (one number shorter) still loads.
+  s::start(g, 5);
+  g.look = 77;
+  s::serialize(g, buffer, sizeof(buffer));
+  char* lastSpace = std::strrchr(buffer, ' ');
+  *lastSpace = '\0';
+  s::Game old;
+  CHECK(s::parse(buffer, old));
+  CHECK(old.look == 0);
+}
+
+// The room pictures: never the same twice in a row, every kind turns up, and
+// different dungeons run differently.
+static void testRoomLooks() {
+  int firstOf[256];
+  for (int look = 0; look < 256; ++look) {
+    s::Game g{};
+    g.look = static_cast<uint8_t>(look);
+    int seen[4] = {};
+    int prev = -1;
+    for (int room = 1; room <= 60; ++room) {
+      const int k = s::roomLook(g, room, 4);
+      CHECK(k >= 0 && k < 4);
+      CHECK(k != prev);
+      ++seen[k];
+      prev = k;
+    }
+    for (int k = 0; k < 4; ++k) CHECK(seen[k] > 0);
+    firstOf[look] = s::roomLook(g, 1, 4);
+  }
+  int firsts[4] = {};
+  for (int look = 0; look < 256; ++look) ++firsts[firstOf[look]];
+  for (int k = 0; k < 4; ++k) CHECK(firsts[k] > 30);
 }
 
 // Many random games: invariants that must hold at every step.
@@ -359,6 +392,7 @@ int main(int argc, char** argv) {
   testFlee();
   testLastCardsAndWinning();
   testSaveRoundTrip();
+  testRoomLooks();
   testSoak();
   std::printf("scoundrel: %d checks, %d failures\n", checks, failures);
   return failures ? 1 : 0;

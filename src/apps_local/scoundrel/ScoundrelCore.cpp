@@ -153,6 +153,24 @@ void start(Game& g, const uint32_t seed, int maxHp) {
   g.roomNo = 1;
   g.note = Note::NewGame;
   g.noteCard = kNoCard;
+  g.look = static_cast<uint8_t>(rng.next() >> 24);
+}
+
+int roomLook(const Game& g, const int roomNo, const int kinds) {
+  if (kinds < 2) return 0;
+  auto mix = [&](const uint32_t r) {
+    uint32_t h = (static_cast<uint32_t>(g.look) + 1u) * 0x9E3779B1u ^ r * 0x85EBCA6Bu;
+    h ^= h >> 15;
+    h *= 0x2C1B3C6Du;
+    h ^= h >> 12;
+    return h;
+  };
+  int look = static_cast<int>(mix(1) % static_cast<uint32_t>(kinds));
+  for (int r = 2; r <= roomNo; ++r) {
+    // Step on by 1..kinds-1: anything but the picture before.
+    look = (look + 1 + static_cast<int>(mix(static_cast<uint32_t>(r)) % static_cast<uint32_t>(kinds - 1))) % kinds;
+  }
+  return look;
 }
 
 bool weaponCanHit(const Game& g, const uint8_t monster) {
@@ -293,6 +311,7 @@ int serialize(const Game& g, char* buffer, const int size) {
   put(static_cast<int>(g.note));
   put(g.noteCard);
   put(g.noteAmount);
+  put(g.look);
   return used;
 }
 
@@ -375,6 +394,13 @@ bool parse(const char* text, Game& out) {
   g.noteCard = static_cast<uint8_t>(take(0, 255));
   g.noteAmount = static_cast<int8_t>(take(-100, 100));
   if (!ok) return false;
+  // Saves from before the room pictures were picked at random end here.
+  {
+    const char* rest = cursor;
+    while (*rest == ' ') ++rest;
+    g.look = (*rest >= '0' && *rest <= '9') ? static_cast<uint8_t>(take(0, 255)) : 0;
+    if (!ok) return false;
+  }
 
   // Every card exactly once across deck, room, the weapon, its kills and the
   // discard is not checkable (the discard is not stored), but no card may

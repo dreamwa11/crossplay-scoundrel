@@ -315,13 +315,14 @@ void topBar(toybox::Screen& screen, const s::Game& g) {
 
 // The doorway in a brick wall, as on the phone. It never changes, so it costs
 // no ghosting.
-void scene(toybox::Screen& screen, const int roomNo) {
+void scene(toybox::Screen& screen, const s::Game& game, const int roomNo) {
   auto& target = screen.target();
   const int16_t w = screen.device().width;
   const int16_t top = kTopBarH + 2;
   // A drawn room, in grey: a doorway hall, a corner with a barred window, a
-  // beamed cellar or a pillared crypt, taken in turn from room to room.
-  const freeink::Icon& art = *kRoomScenes[(roomNo > 0 ? roomNo - 1 : 0) % kRoomSceneCount];
+  // beamed cellar or a pillared crypt, picked at random per dungeon and never
+  // the same twice in a row.
+  const freeink::Icon& art = *kRoomScenes[s::roomLook(game, roomNo, kRoomSceneCount)];
   const fui::Rect band = fui::makeRect(0, top, w, kSceneBottom - top);
   target.fill(band, kWhite);
   target.bitmap(band, fui::bitmapFromIcon(art), fui::BitmapMode::Center, kBlack);
@@ -883,7 +884,7 @@ void buildBoard(toybox::Screen& screen, const BoardModel& model) {
   const fui::DeviceContext device = screen.device();
   toybox::absoluteChrome(screen);
 
-  scene(screen, g.roomNo);
+  scene(screen, g, g.roomNo);
   topBar(screen, g);
   for (int slot = 0; slot < s::kRoomSize; ++slot) drawRoomCard(screen, model, slot);
   strip(screen, g);
