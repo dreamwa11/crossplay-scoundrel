@@ -636,7 +636,7 @@ void buildMenu(toybox::Screen& screen, const MenuModel& model) {
 
 // ---- how to play ----------------------------------------------------------
 //
-// Six pages, each a short rule and a worked example drawn from the table's own
+// Seven pages, each a short rule and a worked example drawn from the table's own
 // parts: cards, the choices under a monster, the weapon pile, the flee button.
 // The examples are pictures, not controls; the flee button is drawn grey to
 // say so.
@@ -649,6 +649,8 @@ const char* const kLessons[] = {
     "stays where it was.",
     "Monsters hit for their number. Fight bare-handed and take it all, or use your weapon and take only the "
     "difference.",
+    "Tap a card to play it: with your weapon if it can hit, else bare-handed. Tap a button under it to choose "
+    "yourself, like bare hands to keep your weapon sharp.",
     "Weapons dull: once it has a kill, a weapon only hits monsters equal to or weaker than its last kill.",
     "Potions heal up to your maximum health. Only one per room counts; a second is wasted.",
     "Before you touch a full room you may flee with this button: its cards go to the bottom of the deck. Never two "
@@ -742,6 +744,37 @@ void lessonFight(toybox::Screen& screen, const fui::Rect& area) {
           "HANDS 8, WEAPON 3");
 }
 
+// A tap mark: two rings and a number, laid over the example.
+void tapMark(toybox::Screen& screen, const int16_t cx, const int16_t cy, const char* n) {
+  auto& target = screen.target();
+  target.fill(fui::makeRect(static_cast<int16_t>(cx - 17), static_cast<int16_t>(cy - 17), 34, 34), kWhite, 17);
+  target.stroke(fui::makeRect(static_cast<int16_t>(cx - 17), static_cast<int16_t>(cy - 17), 34, 34), kBlack, 3, 17);
+  target.stroke(fui::makeRect(static_cast<int16_t>(cx - 24), static_cast<int16_t>(cy - 24), 48, 48), kBlack, 2, 24);
+  say(screen, fui::makeRect(static_cast<int16_t>(cx - 17), static_cast<int16_t>(cy - 17), 34, 34), n, Face::Body);
+}
+
+void lessonTap(toybox::Screen& screen, const fui::Rect& area) {
+  // The orc and its choices again, with where to tap: the card itself plays
+  // the black choice, a button plays that one instead.
+  const int16_t w = 130, h = 176;
+  const int16_t x = static_cast<int16_t>(area.x + (area.width - w) / 2);
+  monsterWithChoices(screen, fui::makeRect(x, area.y, w, h), s::makeCard(s::Kind::Monster, 8), 8, 3, 96);
+  // The marks sit to the left, each with a lead to what it points at, so
+  // they cover nothing.
+  auto& target = screen.target();
+  const int16_t mx = static_cast<int16_t>(x - 64);
+  const int16_t cardY = static_cast<int16_t>(area.y + h / 2);
+  const int16_t chipY = static_cast<int16_t>(area.y + h + 6 + kChipH / 2);
+  target.fill(fui::makeRect(static_cast<int16_t>(mx + 24), static_cast<int16_t>(cardY - 1), static_cast<int16_t>(x - mx - 24), 3), kBlack);
+  target.fill(fui::makeRect(static_cast<int16_t>(mx + 24), static_cast<int16_t>(chipY - 1), static_cast<int16_t>(x - mx - 24), 3), kBlack);
+  tapMark(screen, mx, cardY, "1");
+  tapMark(screen, mx, chipY, "2");
+  const int16_t y = static_cast<int16_t>(area.y + h + kChipH + 40);
+  say(screen, fui::makeRect(area.x, y, area.width, 30), "1  Tap the card: the black choice", Face::Large);
+  say(screen, fui::makeRect(area.x, static_cast<int16_t>(y + 32), area.width, 30), "2  Tap a button: your own choice",
+      Face::Large);
+}
+
 void lessonDull(toybox::Screen& screen, const fui::Rect& area) {
   // A greatsword (9) that last slew a 7: it still takes a skeleton (6), but a
   // jack (11) is bare hands only.
@@ -829,9 +862,12 @@ void buildHowTo(toybox::Screen& screen, const HowToModel& model) {
       lessonFight(screen, example);
       break;
     case 3:
-      lessonDull(screen, example);
+      lessonTap(screen, example);
       break;
     case 4:
+      lessonDull(screen, example);
+      break;
+    case 5:
       lessonPotions(screen, example);
       break;
     default:
